@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FEM Sederhana Pondasi Dangkal 2D</title>
+<style>
+:root{
+  --bg:#eef3f8; --card:#ffffff; --ink:#1c2b39; --muted:#5b6b7d; --blue:#0f78bd; --cyan:#18a8d8; --orange:#f59e0b; --red:#ef4444; --green:#16a34a; --line:#d8e2ec;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(135deg,#eef3f8,#f8fbff);font-family:Arial, Helvetica, sans-serif;color:var(--ink)}
+header{background:linear-gradient(135deg,#0b4c7a,#0f78bd 60%,#18a8d8);color:white;padding:22px 28px;border-bottom:5px solid #f59e0b}
+header h1{margin:0;font-size:26px;letter-spacing:.2px} header p{margin:8px 0 0;max-width:1100px;line-height:1.45;color:#eaf6ff}
+.wrap{padding:20px;display:grid;grid-template-columns:360px 1fr;gap:18px;max-width:1500px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px rgba(11,76,122,.10);overflow:hidden}
+.card h2{font-size:18px;margin:0;padding:15px 18px;background:#f5f9fd;border-bottom:1px solid var(--line)}
+.card .body{padding:16px 18px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.gridFull{grid-column:1/-1}.gridFull{grid-column:1 / -1}.modeSelect{font-size:13px;white-space:normal;min-height:48px;line-height:1.35}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+label{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:5px;display:block} input,select{width:100%;padding:9px 10px;border:1px solid #c8d6e4;border-radius:10px;font-size:14px;background:white;color:var(--ink)}
+.row{margin-bottom:12px}.hint{font-size:12px;color:var(--muted);line-height:1.4}.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button{border:none;border-radius:12px;padding:11px 14px;font-weight:700;cursor:pointer;background:var(--blue);color:white;box-shadow:0 5px 14px rgba(15,120,189,.25)}
+button.secondary{background:#334155} button.warn{background:var(--orange);color:#172033} button:hover{filter:brightness(.97)}
+button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.workflowStatus{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 14px}
+.workflowStep{padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#f8fbff;font-size:12px;font-weight:700;color:#64748b;text-align:center}
+.workflowStep.ok{background:#ecfdf5;border-color:#bbf7d0;color:#166534}
+.workflowStep.warn{background:#fff7e6;border-color:#f8d798;color:#92400e}
+.workflowStep.ready{background:#edf7ff;border-color:#b9ddf6;color:#0b4c7a}
+.analysisProgress{display:none;margin:12px 0 10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#f8fbff}
+.analysisProgress.active{display:block}
+.analysisProgress.done{display:block;background:#ecfdf5;border-color:#bbf7d0}
+.analysisProgress.failed{display:block;background:#fff1f2;border-color:#fecdd3}
+.progressHead{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px;font-size:12px;font-weight:700;color:#334155}
+.progressTrack{height:13px;border-radius:999px;background:#e2e8f0;overflow:hidden;border:1px solid #cbd5e1}
+.progressFill{height:100%;width:0%;background:linear-gradient(90deg,#0f78bd,#39a2db);transition:width .12s ease}
+.analysisProgress.done .progressFill{background:linear-gradient(90deg,#16a34a,#4ade80)}
+.analysisProgress.failed .progressFill{background:linear-gradient(90deg,#dc2626,#fb7185)}
+.progressDetail{margin-top:8px;font-size:12px;color:#64748b;min-height:18px}
+
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.kpi .box{background:linear-gradient(180deg,#fff,#f7fbff);border:1px solid var(--line);border-radius:16px;padding:13px;min-height:86px}.kpi .value{font-size:24px;font-weight:800;color:var(--blue);margin-top:5px}.kpi .unit{font-size:12px;color:var(--muted);font-weight:600}.kpi .name{font-size:12px;color:var(--muted);font-weight:700}
+.canvasPanel{padding:14px}.toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.toolbar>div{min-width:150px}.toolbar input{height:38px}.canvasBox{border:1px solid var(--line);border-radius:16px;background:white;overflow:hidden;position:relative}canvas{width:100%;height:680px;display:block}.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:12px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#f8fbff;align-items:center;justify-content:center;text-align:center;width:100%;box-sizing:border-box}.sw{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:5px}.tabs{display:flex;gap:8px;padding:12px 14px 0}.tab{background:#e8f1fa;color:#24506d;padding:9px 12px;border-radius:12px 12px 0 0;font-weight:700;cursor:pointer;font-size:13px}.tab.active{background:var(--blue);color:white}.note{background:#fff7e6;border-left:5px solid var(--orange);padding:12px 14px;border-radius:12px;margin-top:12px;line-height:1.45}.small{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left}th{background:#f5f9fd;color:#4b6072}.status{padding:10px 12px;border-radius:12px;background:#edf7ff;border:1px solid #cfe8ff;font-size:13px;color:#27516c;margin-top:12px}.footer{max-width:1500px;margin:0 auto 24px;padding:0 20px;color:#5b6b7d;font-size:12px;line-height:1.5}
+
+.theoryPanel{display:none;background:white;border:1px solid var(--line);border-radius:16px;padding:18px;line-height:1.58;max-height:560px;overflow:auto}
+.theoryPanel h3{margin:14px 0 8px;color:#0b4c7a;font-size:17px}.theoryPanel h4{margin:12px 0 6px;color:#24506d;font-size:14px}.theoryPanel p{margin:7px 0}.theoryPanel ul,.theoryPanel ol{margin-top:6px}.eq{background:#f5f9fd;border:1px solid #d8e2ec;border-radius:12px;padding:12px 14px;margin:8px 0;font-family:'Cambria Math','Times New Roman',serif;font-size:16px;overflow:auto;text-align:center}.matrix{display:inline-grid;grid-template-columns:repeat(3,max-content);gap:3px 14px;padding:4px 16px;border-left:2px solid #1c2b39;border-right:2px solid #1c2b39;text-align:center}.matrix.wide{grid-template-columns:repeat(6,max-content);gap:3px 10px}.formula{font-family:'Cambria Math','Times New Roman',serif;font-size:18px;white-space:nowrap}.badge{display:inline-block;background:#e8f1fa;color:#0b4c7a;border:1px solid #cfe1f2;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:700;margin-right:6px}.refList li{margin-bottom:7px}.warnBox{background:#fff7e6;border-left:5px solid var(--orange);padding:10px 12px;border-radius:12px;margin:10px 0}
+@media(max-width:1000px){.wrap{grid-template-columns:1fr}.kpi{grid-template-columns:repeat(2,1fr)}canvas{height:570px}}
+@media(max-width:520px){.grid2{grid-template-columns:1fr}.gridFull{grid-column:auto}.modeSelect{min-height:54px;font-size:12px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>FEM Sederhana Pondasi Dangkal 2D</h1>
+  <p>Model edukatif FEM pondasi dangkal 2D dengan pilihan material <b>Linear Elastic</b> atau <b>Mohr–Coulomb Perfect Plasticity</b>. Model menggunakan kondisi plane strain, elemen segitiga CST, serta analisis incremental–iterative untuk material elastoplastik.</p>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>Input Model</h2>
+    <div class="body">
+      <div class="grid2">
+        <div class="row"><label>Lebar domain tanah, W (m)</label><input id="W" type="number" value="20" step="1"></div>
+        <div class="row"><label>Kedalaman domain, D (m)</label><input id="H" type="number" value="10" step="1"></div>
+        <div class="row"><label>Lebar pondasi, B (m)</label><input id="B" type="number" value="3" step="0.1"></div>
+        <div class="row"><label>Posisi pusat pondasi, x₀ (m)</label><input id="x0" type="number" value="10" step="0.1"></div>
+      </div>
+      <div class="note small"><b>Tahap 1 — Geometri & Mesh:</b> pilih kepadatan mesh sebagai preset atau atur manual. Opsi <b>mesh rapat di sekitar pondasi</b> memperkecil ukuran elemen di zona pengaruh pondasi. Setelah selesai, klik <b>Generate Mesh</b> untuk membuat dan memeriksa discretization sebelum memilih material dan menjalankan analisis.</div>
+      <div class="grid2">
+        <div class="row"><label>Kepadatan Mesh</label><select id="meshPreset" onchange="applyMeshPreset()"><option value="coarse">Mesh Kasar</option><option value="medium" selected>Mesh Sedang</option><option value="fine">Mesh Halus</option><option value="veryfine">Mesh Sangat Halus</option><option value="custom">Manual</option></select></div>
+        <div class="row"><label>Distribusi Mesh</label><select id="refineFooting" onchange="updateMeshInfo()"><option value="no" selected>Seragam</option><option value="yes">Rapat di sekitar pondasi</option></select></div>
+        <div class="row"><label>Jumlah elemen arah X</label><input id="nx" type="number" value="24" min="4" max="36" step="1" onchange="setCustomMesh()"></div>
+        <div class="row"><label>Jumlah elemen arah Y</label><input id="ny" type="number" value="12" min="3" max="20" step="1" onchange="setCustomMesh()"></div>
+      </div>
+      <div id="meshInfo" class="status small">Mesh Sedang: 24 × 12 sel, 576 elemen CST, 325 node.</div>
+      <div class="btns" style="margin-top:6px;margin-bottom:8px">
+        <button id="generateMeshBtn" type="button" onclick="generateMesh()">Generate Mesh</button>
+      </div>
+      <div id="meshGenerateStatus" class="status small">Mesh belum di-generate. Atur geometri dan mesh, lalu klik <b>Generate Mesh</b>.</div>
+      <div class="workflowStatus">
+        <div id="wfMesh" class="workflowStep warn">① Mesh: Belum Generated</div>
+        <div id="wfMaterial" class="workflowStep">② Material: Belum Dipilih</div>
+        <div id="wfAnalysis" class="workflowStep">③ Analysis: Belum Ready</div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:8px 0 14px">
+      <div class="grid2">
+        <div class="row gridFull"><label>Model Konstitutif Tanah</label>
+          <select id="materialModel" class="modeSelect" onchange="toggleMaterialModel()">
+            <option value="elastic" selected>Linear Elastic</option>
+            <option value="mc">Mohr–Coulomb Perfect Plasticity</option>
+          </select>
+          <div class="hint" style="margin-top:5px">Mohr–Coulomb menggunakan elastic predictor–plastic corrector, incremental loading, dan modified Newton iteration. Tidak ada hardening/softening.</div>
+        </div>
+        <div class="row"><label>Modulus tanah, E (kPa)</label><input id="E" type="number" value="20000" step="1000"></div>
+        <div class="row"><label>Poisson ratio, ν</label><input id="nu" type="number" value="0.30" min="0" max="0.49" step="0.01"></div>
+        <div class="row"><label>Berat isi tanah, γ (kN/m³)</label><input id="gamma" type="number" value="18" step="0.5"></div>
+        <div class="row"><label>Sertakan berat sendiri tanah?</label><select id="selfWeight"><option value="yes">Ya</option><option value="no" selected>Tidak</option></select></div>
+      </div>
+
+      <div id="mcInputs" style="display:none">
+        <div class="note small"><b>Parameter Mohr–Coulomb:</b> kriteria kuat geser menggunakan parameter efektif c′ dan φ′. Plastic flow memakai sudut dilatansi ψ. Pada versi ini coupling tekanan pori → plastisitas bersifat satu arah/edukatif, belum fully coupled u–p.</div>
+        <div class="grid2">
+          <div class="row"><label>Kohesi efektif, c′ (kPa)</label><input id="cohesion" type="number" value="20" min="0" step="1"></div>
+          <div class="row"><label>Sudut geser dalam efektif, φ′ (°)</label><input id="phi" type="number" value="30" min="0" max="50" step="1"></div>
+          <div class="row"><label>Sudut dilatansi, ψ (°)</label><input id="psi" type="number" value="5" min="0" max="45" step="1"></div>
+          <div class="row"><label>Flow rule</label><select id="flowRule" onchange="toggleFlowRule()"><option value="nonassoc" selected>Non-associated (ψ independen)</option><option value="assoc">Associated (ψ = φ)</option></select></div>
+          <div class="row"><label>Jumlah load step</label><input id="loadSteps" type="number" value="20" min="2" max="100" step="1"></div>
+          <div class="row"><label>Maks. iterasi / step</label><input id="maxIter" type="number" value="30" min="5" max="100" step="1"></div>
+          <div class="row"><label>Toleransi residual relatif</label><input id="tolNR" type="number" value="0.0001" min="0.0000001" max="0.1" step="0.0001"></div>
+          <div class="row"><label>Regularisasi tangent plastis</label><input id="plasticTangentRatio" type="number" value="0.02" min="0.001" max="0.2" step="0.005"></div>
+        </div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:8px 0 14px">
+      <div class="grid2">
+        <div class="row gridFull"><label>🌊 Muka Air Tanah</label><select id="waterTable" class="modeSelect" onchange="toggleWaterInput()"><option value="no" selected>Tidak ada / tanah kering</option><option value="yes">Ya, muka air tanah datar</option></select></div>
+        <div id="waterInputs" class="grid2 gridFull" style="display:none">
+          <div class="row"><label>Kedalaman MAT dari permukaan, zMAT (m)</label><input id="zwt" type="number" value="3" min="0" step="0.1"></div>
+          <div class="row"><label>Berat isi air, γw (kN/m³)</label><input id="gammaW" type="number" value="9.81" min="1" step="0.01"></div>
+          <div class="row gridFull"><label>Kondisi Drainase</label><select id="drainMode" class="modeSelect" onchange="toggleDrainInput()"><option value="drained">Drained — Δu = 0</option><option value="undrained" selected>Undrained — Δu dengan Skempton</option><option value="consolidation">Konsolidasi sederhana — Δu berkurang terhadap waktu</option></select></div>
+          <div id="skemptonInputs" class="grid2 gridFull">
+            <div class="row"><label>Parameter Skempton A</label><input id="skemptonA" type="number" value="0.5" min="0" max="1.5" step="0.05"></div>
+            <div class="row"><label>Parameter Skempton B</label><input id="skemptonB" type="number" value="1.0" min="0" max="1" step="0.05"></div><div class="row"><label>Modulus respons Δu terhadap ΔV, K<sub>uV</sub> (kPa)</label><input id="kuVol" type="number" value="20000" min="0" step="1000"></div>
+          </div>
+          <div id="consInputs" class="grid2 gridFull" style="display:none">
+            <div class="row"><label>Waktu analisis, t (hari)</label><input id="timeDays" type="number" value="30" min="0" step="1"></div>
+            <div class="row"><label>Waktu karakteristik disipasi, τ (hari)</label><input id="tauDays" type="number" value="30" min="0.1" step="1"></div>
+          </div>
+          <div class="hint gridFull">u = u₀ + Δu. Drained: Δu=0. Pada zona jenuh (di bawah muka air), Undrained menghitung Δu dari Skempton A–B dan indikator perubahan volume; tegangan FEM yang compression-negative dikonversi ke compression-positive untuk persamaan Skempton. Konsolidasi sederhana: Δu(t)=Δu₀ exp(−t/τ).</div>
+        </div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:8px 0 14px">
+      <div class="grid2">
+        <div class="row gridFull"><label>Pilihan Mode Input Pondasi</label><select id="loadMode" class="modeSelect" onchange="toggleLoadInput()"><option value="load" selected>Input Beban Merata / Tekanan q</option><option value="disp">Input Deformasi Merata Pondasi</option></select><div class="hint" style="margin-top:5px">Pilih apakah pondasi dimodelkan dengan beban merata atau deformasi/penurunan merata yang ditentukan.</div></div>
+        <div class="row" id="qRow"><label>Tekanan pondasi, q (kPa)</label><input id="q" type="number" value="150" step="10"></div>
+        <div class="row" id="dispRow" style="display:none"><label>Deformasi merata pondasi, s (mm, turun +)</label><input id="prescribedDisp" type="number" value="10" step="0.5" min="0"></div>
+      </div>
+      <div class="btns">
+        <button id="runAnalysisBtn" onclick="runAnalysis()" disabled>Run Analysis</button>
+        <button class="secondary" onclick="resetDefault()">Reset Default</button>
+        <button class="warn" onclick="downloadCSV()">Download Hasil CSV</button>
+      </div>
+      <div id="analysisProgress" class="analysisProgress">
+        <div class="progressHead"><span id="progressTitle">Analysis Progress</span><span id="progressPercent">0%</span></div>
+        <div class="progressTrack"><div id="progressFill" class="progressFill"></div></div>
+        <div id="progressDetail" class="progressDetail">Menunggu analisis...</div>
+      </div>
+      <div id="status" class="status">Siap dihitung. Gunakan mesh sedang agar proses cepat di browser.</div>
+      <div class="note small">
+        <b>Catatan:</b> model ini memakai satuan kN–m–kPa. Beban 2D adalah beban per meter panjang pondasi. Untuk desain final perlu verifikasi dengan metode geoteknik dan data tanah sebenarnya.
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="kpi">
+      <div class="box"><div class="name">Settlement maks.</div><div id="k_settle" class="value">-</div><div class="unit">mm, arah turun</div></div>
+      <div class="box"><div class="name">Settlement rata-rata pondasi</div><div id="k_avg" class="value">-</div><div class="unit">mm</div></div>
+      <div class="box"><div class="name">Beban total 2D</div><div id="k_load" class="value">-</div><div class="unit">kN/m</div></div>
+      <div class="box"><div class="name">σᵧ maksimum</div><div id="k_sig" class="value">-</div><div class="unit">kPa, kompresi</div></div>
+    </section>
+
+    <section class="card">
+      <div class="tabs">
+        <div class="tab active" onclick="setView('uy',this)">Kontur Deformasi</div>
+        <div class="tab" onclick="setView('deltaV',this)">Regangan & ΔV</div>
+        <div class="tab" onclick="setView('sy',this)">Tambahan Tegangan Δσᵧ</div>
+        <div class="tab" onclick="setView('stotal',this)">Tegangan Total σᵧ</div>
+        <div class="tab" onclick="setView('pore',this)">Tekanan Air Pori u</div>
+        <div class="tab" onclick="setView('seff',this)">Tegangan Efektif σ′ᵧ</div>
+        <div class="tab" id="plasticityTab" onclick="setView('plasticity',this)">Plasticity / Yield</div>
+        <div class="tab" onclick="setView('baseStress',this)">Diagram Dasar Pondasi</div>
+        <div class="tab" id="loadSettlementTab" onclick="setView('loadsettle',this)">Load–Settlement</div>
+        <div class="tab" onclick="setView('cross',this)">Cross-Section</div>
+        <div class="tab" onclick="setView('mesh',this)">Mesh</div>
+        <div class="tab" onclick="setView('theory',this)">Dasar Teori & Referensi</div>
+      </div>
+      <div class="canvasPanel">
+        <div id="toolbar" class="toolbar">
+          <div><label>Mode tampilan kontur / mesh</label><select id="showMode" onchange="draw()"><option value="deformed">Mesh deformasi + kontur</option><option value="original">Mesh asli saja</option><option value="both">Mesh asli dan deformasi</option><option value="meshstress">Mesh asli + stress point</option></select></div>
+          <div id="defScaleControl"><label>Skala deformasi visual</label><input id="defScale" type="number" value="80" step="10" min="0" oninput="draw()" onchange="draw()" title="Hanya mengubah pembesaran visual deformasi; tidak menjalankan ulang FEM." style="width:110px"></div>
+          <div id="previewMeshControl" style="display:none"><label>Preview mesh sebelum Run</label><select id="previewMeshMode" onchange="draw()">
+            <option value="mesh" selected>Mesh saja</option>
+            <option value="nodes">Mesh + Nodal Point</option>
+            <option value="stress">Mesh + Stress Point</option>
+            <option value="both">Mesh + Nodal + Stress Point</option>
+          </select></div>
+          <div id="previewLabelControl" style="display:none"><label>Kepadatan label preview</label><select id="previewLabelDensity" onchange="draw()">
+            <option value="auto" selected>Otomatis</option>
+            <option value="all">Semua</option>
+            <option value="2">Setiap 2</option>
+            <option value="3">Setiap 3</option>
+            <option value="5">Setiap 5</option>
+            <option value="10">Setiap 10</option>
+          </select></div>
+          <div id="meshResultControl"><label>Data titik nodal</label><select id="meshDataMode" onchange="draw()"><option value="none">Mesh asli + titik nodal</option><option value="deformation">Mesh asli + deformasi nodal</option><option value="stress">Mesh asli + tegangan nodal</option><option value="both">Mesh asli + deformasi & tegangan nodal</option></select></div>
+          <div id="nodeDensityControl"><label>Kepadatan label node</label><select id="nodeLabelDensity" onchange="draw()"><option value="auto" selected>Otomatis</option><option value="all">Semua node</option><option value="2">Setiap 2 node</option><option value="3">Setiap 3 node</option><option value="5">Setiap 5 node</option></select></div>
+          <div id="stressPointControl"><label>Stress point elemen</label><select id="stressPointMode" onchange="draw()"><option value="none">Tidak tampil</option><option value="points">Titik × centroid saja (tanpa nilai)</option><option value="sy">σy di centroid elemen</option><option value="all">σx, σy, τxy di centroid</option></select></div>
+          <div id="settlementResultControl"><label>Output kontur deformasi</label><select id="settlementResult" onchange="draw()">
+            <option value="uy" selected>Deformasi vertikal, Uy</option>
+            <option value="ux">Deformasi horizontal, Ux</option>
+            <option value="utotal">Deformasi total, Utotal</option>
+          </select></div>
+          <div id="deltaVResultControl"><label>Output Regangan & ΔV</label><select id="deltaVResult" onchange="draw()">
+            <option value="depsy">Regangan tambahan vertikal, Δεy</option>
+            <option value="depsx">Regangan tambahan horizontal, Δεx</option>
+            <option value="epsv" selected>Regangan volumetrik, εv</option>
+            <option value="dvol">Perubahan volume elemen, ΔV</option>
+          </select></div>
+          <div id="plasticityResultControl"><label>Output Plasticity / Yield</label><select id="plasticityResult" onchange="draw()">
+            <option value="state" selected>Status Elastic / Plastic</option>
+            <option value="yield">Yield function / mobilisasi</option>
+            <option value="epsp">Equivalent plastic strain, ε̄p</option>
+            <option value="epspv">Plastic volumetric strain, εvp</option>
+            <option value="gamp">Plastic shear strain, γp</option>
+          </select></div>
+          <div id="poreResultControl"><label>Output tekanan air pori</label><select id="poreResult" onchange="draw()">
+            <option value="u0">Tekanan pori hidrostatik, u₀</option>
+            <option value="duvol">Excess pore pressure akibat perubahan volume, ΔuΔV</option>
+            <option value="dusk">Excess pore pressure Skempton (undrained), ΔuS</option>
+            <option value="du" selected>Excess pore pressure aktual, Δu</option>
+            <option value="utotal">Total pore pressure, u = u₀ + Δu</option>
+          </select></div>
+          <div id="crossControl"><label>Orientasi cross-section</label><select id="crossType" onchange="updateCrossPositionLabel();draw()"><option value="h">Cross Section Horizontal — arah X</option><option value="v">Cross Section Vertikal — arah Y</option></select></div>
+          <div id="crossPosControl"><label id="crossPosLabel">Posisi garis horizontal: Y = ... m</label><input id="crossPos" type="number" step="0.1" value="2" onchange="draw()"></div>
+          <div id="crossResultControl"><label>Output cross-section</label><select id="crossResult" onchange="draw()"><option value="uy">Displacement Uy</option><option value="sy">Tambahan Tegangan Pondasi Δσy</option><option value="stotal">Tegangan Total Vertikal, σy</option><option value="seff">Tegangan Efektif σ′y</option><option value="pore">Tekanan Pori u</option><option value="du">Excess Pore Pressure Δu</option></select></div>
+          <div id="baseResultControl"><label>Output diagram dasar pondasi</label><select id="baseResult" onchange="draw()"><option value="uy">Displacement Uy</option><option value="sy">Tambahan Tegangan Pondasi Δσy</option><option value="stotal">Tegangan Total Vertikal, σy</option><option value="seff">Tegangan Efektif σ′y</option><option value="pore">Tekanan Pori u</option><option value="du">Excess Pore Pressure Δu</option></select></div>
+        </div>
+        <div id="canvasBox" class="canvasBox"><canvas id="cv" width="1100" height="720"></canvas></div>
+        <div id="theoryPanel" class="theoryPanel">
+<h3>Dasar Teori FEM Pondasi Dangkal 2D, Muka Air Tanah dan Drainase</h3>
+<p><span class="badge">Tujuan</span> Program ini adalah media pembelajaran untuk menghubungkan respons deformasi FEM, perubahan tegangan, muka air tanah, tekanan air pori hidrostatik, tekanan air pori berlebih, dan tegangan efektif.</p>
+<div class="warnBox"><b>Batas model:</b> tersedia Linear Elastic dan Mohr–Coulomb Perfect Plasticity. Implementasi Mohr–Coulomb memakai pendekatan incremental–iterative edukatif dengan stress correction dan regularisasi tangent; belum setara solver geoteknik komersial dengan consistent tangent multi-surface penuh. Tekanan pori tetap one-way/post-processing, bukan coupled hydro-mechanical u–p.</div>
+<h3>0. Alur FEM dalam Program</h3>
+<div class="eq"><span class="formula">Geometri → Generate Mesh → Model Material → Boundary & Loading → Run Analysis → Post-processing</span></div>
+<p>Mesh dibuat sebagai tahap tersendiri. Perubahan W, D, B, posisi pondasi, jumlah elemen, atau distribusi mesh akan menandai mesh sebagai <b>perlu di-generate ulang</b>. Perubahan E, ν, c′, φ′, ψ, muka air, atau beban tidak mengubah topologi mesh sehingga tidak memerlukan generate ulang.</p>
+<p>Saat <b>Run Analysis</b>, progress bar menunjukkan tahapan solver. Untuk Mohr–Coulomb, progress diperbarui selama incremental loading dengan informasi <b>load step, iteration, residual ratio, dan jumlah elemen plastic trial</b>. Perhitungan memberi kesempatan browser memperbarui tampilan di antara iterasi sehingga proses yang masih berjalan dapat dibedakan dari aplikasi yang tidak merespons.</p>
+<p><b>Orientasi mesh simetris:</b> untuk mengurangi numerical symmetry breaking pada model Mohr–Coulomb, quadrilateral grid di sisi kiri centerline pondasi dibagi dengan diagonal yang merupakan cerminan diagonal di sisi kanan. Dengan demikian pasangan elemen kiri–kanan memiliki topologi yang saling mirror, bukan seluruh domain memakai diagonal searah. Simetri paling baik bila centerline pondasi tepat berimpit dengan sebuah grid line.</p>
+<p><b>Preview mesh sebelum analisis:</b> setelah Generate Mesh, pengguna dapat menampilkan mesh saja, nodal point, stress point, atau keduanya. Pada elemen CST, stress/strain konstan dalam satu elemen sehingga centroid dipakai sebagai representasi stress point. Sebelum Run Analysis, tanda stress point hanya menunjukkan <i>lokasi evaluasi</i>; nilai σx, σy, dan τxy belum tersedia sampai solver selesai.</p>
+<h3>1. Idealisisasi dan Asumsi Plane Strain</h3>
+<p>Domain tanah homogen dibagi menjadi elemen segitiga CST tiga node. Untuk pondasi menerus digunakan kondisi plane strain:</p>
+<div class="eq"><span class="formula">ε<sub>z</sub>=0,&nbsp; γ<sub>xz</sub>=0,&nbsp; γ<sub>yz</sub>=0</span></div>
+<p>Vektor tegangan dan regangan:</p>
+<div class="eq"><span class="formula">{σ}=[σ<sub>x</sub>, σ<sub>y</sub>, τ<sub>xy</sub>]<sup>T</sup>,&nbsp; {ε}=[ε<sub>x</sub>, ε<sub>y</sub>, γ<sub>xy</sub>]<sup>T</sup></span></div>
+<h3>2. Hubungan Tegangan–Regangan Elastis</h3>
+<div class="eq"><span class="formula">{σ}=[D]{ε}</span></div>
+<p>Untuk plane strain:</p>
+<div class="eq"><span class="formula">[D]=</span> <span class="formula">E/((1+ν)(1−2ν))</span> × <span class="matrix"><span>1−ν</span><span>ν</span><span>0</span><span>ν</span><span>1−ν</span><span>0</span><span>0</span><span>0</span><span>(1−2ν)/2</span></span></div>
+<h3>3. Persamaan Global FEM</h3>
+<div class="eq"><span class="formula">[K]{u}={F}</span></div>
+<p>Matriks kekakuan elemen CST:</p>
+<div class="eq"><span class="formula">[k]<sub>e</sub>=tA[B]<sup>T</sup>[D][B]</span></div>
+<p>Regangan dan tegangan elemen:</p>
+<div class="eq"><span class="formula">{ε}=[B]{u}<sub>e</sub></span><br><span class="formula">{Δσ}<sub>e</sub>=[D][B]{u}<sub>e</sub></span></div>
+<p>Program menggunakan tebal keluar bidang <b>t=1 m</b>, sehingga beban 2D dibaca sebagai kN/m.</p>
+
+<h3>3A. Model Mohr–Coulomb Perfect Plasticity</h3>
+<p>Jika model material <b>Mohr–Coulomb Perfect Plasticity</b> dipilih, respons awal tetap elastik dengan E dan ν. Setelah keadaan tegangan mencapai yield surface, elemen dapat mengalami regangan plastis permanen tanpa hardening atau softening.</p>
+<div class="eq"><span class="formula">τ<sub>f</sub>=c′+σ′<sub>n</sub> tan φ′</span></div>
+<p>Dalam representasi tegangan utama compression-positive yang dipakai untuk pemeriksaan yield:</p>
+<div class="eq"><span class="formula">f=(σ′<sub>1</sub>−σ′<sub>3</sub>)−(σ′<sub>1</sub>+σ′<sub>3</sub>)sinφ′−2c′cosφ′ ≤ 0</span></div>
+<p><b>f&lt;0</b> berarti elastik, sedangkan trial state dengan <b>f&gt;0</b> dikoreksi kembali ke yield surface. Flow rule menggunakan plastic potential dengan sudut dilatansi ψ. Associated flow berarti ψ=φ′; non-associated flow memakai ψ&lt;φ′.</p>
+<div class="eq"><span class="formula">dε<sup>p</sup>=dλ ∂g/∂σ</span></div>
+<p>Pembebanan dibagi menjadi beberapa load step. Pada tiap step program membentuk residual:</p>
+<div class="eq"><span class="formula">{R}={F}<sub>ext</sub>−{F}<sub>int</sub></span></div>
+<p>dan melakukan modified Newton iteration hingga residual memenuhi toleransi. <b>Norma residual dihitung hanya pada free DOF</b>; gaya reaksi pada DOF yang dikekang oleh boundary condition tidak dianggap sebagai ketidakseimbangan. Karena perfect plasticity dapat menyebabkan tangent stiffness sangat kecil, program memakai regularisasi tangent minimum yang dapat diatur pengguna untuk menjaga stabilitas numerik di browser.</p>
+<div class="warnBox"><b>Interpretasi:</b> zona plastis, yield ratio, equivalent plastic strain, plastic volumetric strain, dan plastic shear strain adalah keluaran pembelajaran untuk menunjukkan perkembangan mekanisme keruntuhan. Nilai ultimate load harus diverifikasi dengan analisis geoteknik yang lebih rigor.</div>
+
+<h3>4. Δ Strain, Regangan Volumetrik, dan Perubahan Volume</h3>
+<p>Perubahan volume kecil pada elemen dinyatakan oleh regangan volumetrik:</p>
+<div class="eq"><span class="formula">Δε<sub>y</sub>=ε<sub>y,loaded</sub>−ε<sub>y,baseline</sub></span></div>
+<p>Perubahan regangan vertikal tersebut merupakan salah satu ukuran lokal deformasi. Untuk perubahan volume kecil:</p>
+<div class="eq"><span class="formula">ε<sub>v</sub>=Δε<sub>x</sub>+Δε<sub>y</sub></span></div>
+<div class="eq"><span class="formula">ΔV≈ε<sub>v</sub>V<sub>0</sub>=ε<sub>v</sub>A<sub>e</sub>t</span></div>
+<p>Pada program ini t=1 m, sehingga ΔV dibaca sebagai perubahan volume elemen per meter panjang keluar bidang.</p>
+<p>Dengan konvensi regangan program, kompresi umumnya memberikan ε<sub>v</sub>&lt;0. Pada tanah jenuh, kecenderungan kompresi cepat tanpa drainase dapat menaikkan tekanan air pori. Untuk visualisasi edukatif, program menampilkan komponen indikator:</p>
+<div class="eq"><span class="formula">Δu<sub>ΔV</sub>=max(0,−K<sub>uV</sub> ε<sub>v</sub>)</span></div>
+<p>Parameter K<sub>uV</sub> adalah modulus respons pengguna untuk menghubungkan perubahan volume kecil dengan kenaikan tekanan pori. Persamaan ini adalah <b>pendekatan visualisasi</b>, bukan persamaan konstitutif Biot penuh.</p>
+<h3>5. Beban Pondasi atau Deformasi yang Ditentukan</h3>
+<p>Pondasi dapat dimodelkan dengan tekanan merata q atau deformasi vertikal merata yang ditentukan. Untuk beban merata:</p>
+<div class="eq"><span class="formula">P<sub>2D</sub>=qB</span></div>
+<p>Untuk segmen permukaan sepanjang Δx:</p>
+<div class="eq"><span class="formula">F<sub>i</sub>=F<sub>j</sub>=qΔx/2</span></div>
+<h3>6. Muka Air Tanah dan Tekanan Pori Hidrostatik</h3>
+<p>Muka air tanah diasumsikan datar pada kedalaman z<sub>MAT</sub> dari permukaan. Dengan koordinat y bertambah ke bawah:</p>
+<div class="eq"><span class="formula">u<sub>0</sub>=0,&nbsp; y≤z<sub>MAT</sub></span><br><span class="formula">u<sub>0</sub>=γ<sub>w</sub>(y−z<sub>MAT</sub>),&nbsp; y&gt;z<sub>MAT</sub></span></div>
+<p>Tekanan air pori total kemudian:</p>
+<div class="eq"><span class="formula">u=u<sub>0</sub>+Δu</span></div>
+<h3>7. Tegangan Total dan Tegangan Efektif</h3>
+<p>Perubahan tegangan hasil FEM ditafsirkan sebagai Δσ akibat pembebanan/model mekanik. Tegangan efektif mengikuti prinsip Terzaghi:</p>
+<div class="eq"><span class="formula">σ′=σ−u</span></div>
+<p>Untuk komponen vertikal yang divisualisasikan:</p>
+<div class="eq"><span class="formula">σ′<sub>y</sub>=σ<sub>y,total</sub>−u</span></div>
+<h3>8. Kondisi Drained, Undrained, Parameter A–B Skempton, dan Excess Pore Pressure</h3>
+<h4>A. Kondisi drained</h4>
+<p>Pada kondisi drained, air pori diberi kesempatan keluar selama pembebanan sehingga tekanan pori berlebih dianggap telah terdisipasi:</p>
+<div class="eq"><span class="formula">Δu=0</span><br><span class="formula">u=u<sub>0</sub></span></div>
+
+<h4>B. Kondisi undrained</h4>
+<p>Pada kondisi undrained, pembebanan berlangsung cukup cepat dibanding kemampuan air pori untuk mengalir. Untuk tanah jenuh, sebagian perubahan tegangan total dapat diteruskan menjadi <b>excess pore pressure</b>. Program menggunakan dua indikator edukatif: pendekatan Skempton dan pendekatan perubahan volume.</p>
+
+<h4>Koefisien tekanan pori Skempton B</h4>
+<p>Parameter <b>B</b> menggambarkan respons tekanan pori terhadap perubahan tegangan isotropik. Secara konseptual:</p>
+<div class="eq"><span class="formula">B=Δu/Δσ<sub>3</sub></span></div>
+<p>Untuk tanah jenuh sempurna B umumnya mendekati 1, sedangkan keberadaan udara dalam pori dapat menurunkannya.</p>
+
+<h4>Koefisien tekanan pori Skempton A</h4>
+<p>Parameter <b>A</b> mengontrol kontribusi perubahan tegangan deviatorik terhadap tekanan pori. Bentuk yang digunakan program:</p>
+<div class="eq"><span class="formula">Δu<sub>S</sub>=B[Δσ<sub>3</sub>+A(Δσ<sub>1</sub>−Δσ<sub>3</sub>)]</span></div>
+<p>Δσ<sub>1</sub> dan Δσ<sub>3</sub> dihitung dari komponen tambahan tegangan FEM Δσ<sub>x</sub>, Δσ<sub>y</sub>, dan Δτ<sub>xy</sub>. Jadi Δu<sub>S</sub> merepresentasikan excess pore pressure akibat perubahan keadaan tegangan pada kondisi undrained.</p>
+
+<h4>Excess pore pressure akibat kecenderungan perubahan volume</h4>
+<p>Selain Skempton, program menyediakan indikator berbasis regangan volumetrik:</p>
+<div class="eq"><span class="formula">Δu<sub>ΔV</sub>=max(0,−K<sub>uV</sub>ε<sub>v</sub>)</span></div>
+<p>Jika ε<sub>v</sub>&lt;0, elemen memiliki kecenderungan berkontraksi. Pada kondisi undrained kontraksi tersebut terhambat oleh air pori, sehingga secara konseptual dapat menghasilkan kenaikan tekanan pori. K<sub>uV</sub> adalah parameter edukatif yang menghubungkan kecenderungan perubahan volume dengan Δu dan bukan parameter konstitutif standar seperti A atau B.</p>
+
+<h4>Excess pore pressure aktual yang dipakai program</h4>
+<p>Untuk mode undrained, program membentuk nilai awal:</p>
+<div class="eq"><span class="formula">Δu<sub>initial</sub>=max(Δu<sub>S</sub>,Δu<sub>ΔV</sub>,0)</span></div>
+<p>Untuk mode konsolidasi sederhana:</p>
+<div class="eq"><span class="formula">Δu(t)=Δu<sub>initial</sub> exp(−t/τ)</span></div>
+<p>Sedangkan total pore pressure adalah:</p>
+<div class="eq"><span class="formula">u=u<sub>0</sub>+Δu</span></div>
+<p>Submenu tekanan pori menampilkan secara terpisah u<sub>0</sub>, Δu<sub>ΔV</sub>, Δu<sub>S</sub>, Δu aktual, dan u total sehingga kontribusi masing-masing dapat dibandingkan.</p>
+
+<h3>9. Mesh, Node, dan Stress Point</h3>
+<p>Domain tanah didiskretisasi dengan <b>structured mesh</b>. Jumlah pembagian arah horizontal dan vertikal adalah n<sub>x</sub> dan n<sub>y</sub>. Untuk grid persegi panjang yang setiap selnya dibagi menjadi dua segitiga CST:</p>
+<div class="eq"><span class="formula">N<sub>node</sub>=(n<sub>x</sub>+1)(n<sub>y</sub>+1)</span><br><span class="formula">N<sub>elemen</sub>=2n<sub>x</sub>n<sub>y</sub></span></div>
+<p>Program menyediakan mesh kasar, sedang, halus, sangat halus, manual, serta opsi pemadatan mesh di sekitar pondasi. Mesh yang lebih rapat meningkatkan resolusi gradien tegangan dan deformasi, tetapi meningkatkan jumlah derajat bebas dan waktu komputasi.</p>
+
+<h4>Node displacement (●)</h4>
+<p>Displacement merupakan <b>primary unknown</b> FEM. Setiap node memiliki dua derajat bebas:</p>
+<div class="eq"><span class="formula">{u}<sub>i</sub>=[u<sub>x,i</sub>&nbsp; u<sub>y,i</sub>]<sup>T</sup></span></div>
+<p>Karena koordinat y program bertambah ke bawah, nilai u<sub>y</sub> positif menunjukkan penurunan.</p>
+
+<h4>Stress point elemen (×)</h4>
+<p>Pada elemen CST, regangan dan tegangan konstan di dalam satu elemen. Oleh karena itu nilai tegangan elemen ditampilkan pada <b>centroid segitiga</b> sebagai stress point:</p>
+<div class="eq"><span class="formula">x<sub>c</sub>=(x<sub>1</sub>+x<sub>2</sub>+x<sub>3</sub>)/3</span><br><span class="formula">y<sub>c</sub>=(y<sub>1</sub>+y<sub>2</sub>+y<sub>3</sub>)/3</span></div>
+<p>Simbol × merupakan stress point elemen, sedangkan ● merupakan node displacement. Keduanya sengaja dibedakan karena displacement adalah variabel nodal primer, sedangkan tegangan adalah hasil turunan elemen.</p>
+
+<h4>Tegangan nodal hasil averaging</h4>
+<p>Jika tegangan ditampilkan pada node, nilai tersebut bukan unknown primer, tetapi hasil <i>stress recovery</i>/averaging dari elemen-elemen yang terhubung:</p>
+<div class="eq"><span class="formula">σ<sub>node</sub>=Σσ<sub>e</sub>/n</span></div>
+
+<h3>10. Berat Sendiri, Tegangan Awal, Tambahan Tegangan, dan Tegangan Total</h3>
+<p>Jika berat sendiri dipilih, program terlebih dahulu menyelesaikan kondisi <b>baseline</b> akibat body force tanah. Dari baseline ini diperoleh tegangan awal σ<sub>0</sub>. Setelah aksi pondasi diberikan, program menyelesaikan kondisi loaded. Dengan demikian:</p>
+<div class="eq"><span class="formula">Δσ<sub>pondasi</sub>=σ<sub>loaded</sub>−σ<sub>baseline</sub></span></div>
+<div class="eq"><span class="formula">σ<sub>total</sub>=σ<sub>loaded</sub>=σ<sub>baseline</sub>+Δσ<sub>pondasi</sub></span></div>
+<p>Karena itu menu <b>Tambahan Tegangan akibat Beban Pondasi, Δσ<sub>y</sub></b> berbeda dari <b>Tegangan Total Vertikal, σ<sub>y</sub></b> ketika berat sendiri diperhitungkan. Jika berat sendiri tidak dipilih, baseline nol sehingga keduanya dapat berimpit.</p>
+
+<h3>11. Input Beban dan Input Deformasi</h3>
+<p>Pada mode beban, tekanan q dikonversi menjadi gaya nodal ekuivalen. Pada mode deformasi, penurunan yang dimasukkan diperlakukan sebagai <b>penurunan tambahan terhadap kondisi baseline berat sendiri</b>:</p>
+<div class="eq"><span class="formula">u<sub>y,target</sub>=u<sub>y,baseline</sub>+s</span></div>
+<p>Pendekatan ini mencegah imposed settlement terlihat sebagai pengangkatan relatif ketika settlement akibat berat sendiri telah terbentuk terlebih dahulu.</p>
+
+<h3>12. Tegangan Utama dan Excess Pore Pressure</h3>
+<p>Dari komponen Δσ<sub>x</sub>, Δσ<sub>y</sub>, dan Δτ<sub>xy</sub>, program membentuk tegangan utama perubahan untuk pendekatan Skempton. Excess pore pressure dihitung dari <b>tambahan tegangan akibat aksi pondasi</b>, bukan dari tegangan baseline berat sendiri.</p>
+
+<h3>13. Diagram Dasar Pondasi dan Cross-Section</h3>
+<p>Diagram dasar pondasi mengambil hasil pada stress point elemen paling dekat dengan permukaan di dalam lebar pondasi. Cross-section horizontal atau vertikal mengekstrak nilai terdekat terhadap garis potong terpilih. Output yang tersedia meliputi displacement, tambahan tegangan, tegangan total, tegangan efektif, tekanan pori, dan excess pore pressure.</p>
+
+<h3>14. Interpretasi Kontur</h3>
+<p>Warna kontur digunakan untuk membantu membaca distribusi relatif. Skala warna tidak menggantikan nilai numerik. Untuk mesh deformasi, <b>Skala deformasi visual</b> hanya memperbesar atau memperkecil bentuk pada layar melalui koordinat visual <span class="formula">x<sub>vis</sub>=x+S<sub>d</sub>u<sub>x</sub></span> dan <span class="formula">y<sub>vis</sub>=y+S<sub>d</sub>u<sub>y</sub></span>. Perubahan nilai S<sub>d</sub> langsung menggambar ulang output menggunakan hasil FEM yang sudah tersimpan, sehingga <b>tidak menjalankan ulang solver dan tidak mengubah hasil numerik FEM</b>.</p>
+
+<h3>15. Keterbatasan Numerik</h3>
+<ul>
+<li>Material tersedia sebagai Linear Elastic atau Mohr–Coulomb Perfect Plasticity homogen. Belum ada hardening/softening.</li>
+<li>Elemen CST menghasilkan tegangan konstan per elemen dan dapat kurang halus untuk gradien tegangan tajam.</li>
+<li>Model muka air tanah datar dan tekanan pori undrained/konsolidasi masih pendekatan edukatif.</li>
+<li>Mohr–Coulomb yang tersedia masih versi edukatif perfect-plastic dengan modified Newton/regularized tangent; belum ada hardening/softening, interface pondasi–tanah, seepage FEM penuh, atau konsolidasi coupled Biot.</li>
+<li>Studi sensitivitas mesh tetap diperlukan untuk melihat konvergensi hasil.</li>
+</ul>
+
+<h3>16. Visualisasi Hasil</h3><ul><li>Kontur deformasi Ux, Uy, dan Utotal.</li><li>Δ tegangan FEM σ<sub>y</sub>.</li><li>Tegangan total σ<sub>y</sub>.</li><li>Δ strain vertikal, volumetric strain ε<sub>v</sub>, dan perubahan volume elemen ΔV.</li><li>Tekanan pori hidrostatik u<sub>0</sub>, Δu akibat perubahan volume, Δu Skempton, excess pore pressure aktual, dan total pore pressure u=u<sub>0</sub>+Δu.</li><li>Tegangan efektif σ′<sub>y</sub>.</li><li>Zona Elastic/Plastic, yield ratio, equivalent plastic strain, plastic volumetric strain, dan plastic shear strain untuk Mohr–Coulomb.</li><li>Kurva Load–Settlement dari setiap load increment.</li><li>Data titik nodal sebagai rata-rata elemen yang terhubung.</li></ul>
+<h3>17. Kondisi Batas</h3><ul><li>Dasar: u<sub>x</sub>=0 dan u<sub>y</sub>=0.</li><li>Sisi kiri/kanan: u<sub>x</sub>=0.</li><li>Permukaan atas bebas kecuali area pondasi.</li></ul>
+<h3>18. Referensi</h3><ol class="refList"><li>Zienkiewicz, O. C., Taylor, R. L., &amp; Zhu, J. Z. <i>The Finite Element Method: Its Basis and Fundamentals</i>. Elsevier.</li><li>Potts, D. M., &amp; Zdravković, L. <i>Finite Element Analysis in Geotechnical Engineering: Theory</i>. Thomas Telford.</li><li>Desai, C. S., &amp; Christian, J. T. <i>Numerical Methods in Geotechnical Engineering</i>. McGraw-Hill.</li><li>Cook, R. D., Malkus, D. S., Plesha, M. E., &amp; Witt, R. J. <i>Concepts and Applications of Finite Element Analysis</i>. Wiley.</li><li>Logan, D. L. <i>A First Course in the Finite Element Method</i>. Cengage.</li><li>Skempton, A. W. (1954). The pore-pressure coefficients A and B. <i>Géotechnique</i>, 4(4), 143–147.</li><li>Terzaghi, K., Peck, R. B., &amp; Mesri, G. <i>Soil Mechanics in Engineering Practice</i>. Wiley.</li><li>Das, B. M., &amp; Sobhan, K. <i>Principles of Geotechnical Engineering</i>. Cengage.</li><li>Biot, M. A. (1941). General theory of three-dimensional consolidation. <i>Journal of Applied Physics</i>, 12, 155–164.</li>
+<li>Bathe, K. J. <i>Finite Element Procedures</i>. Prentice Hall.</li>
+<li>Hughes, T. J. R. <i>The Finite Element Method: Linear Static and Dynamic Finite Element Analysis</i>. Dover.</li>
+<li>Smith, I. M., Griffiths, D. V., &amp; Margetts, L. <i>Programming the Finite Element Method</i>. Wiley.</li></ol>
+<h3>19. Catatan Pengembangan</h3><p>Untuk analisis yang lebih realistis, tahap berikutnya adalah persamaan konsolidasi berbasis permeabilitas, koefisien konsolidasi, kondisi drainase batas, dan coupled hydro-mechanical FEM.</p>
+</div></div>
+        <div id="legend" class="legend">
+<span><span class="sw" style="background:#0f78bd"></span><b>Pondasi / area beban</b></span>
+<span><span class="sw" style="background:#f59e0b"></span><b>Boundary condition:</b> Ux=0 sisi kiri/kanan; Ux=Uy=0 dasar</span>
+<span><span class="sw" style="background:#222"></span><b>Mesh:</b> ● node displacement &nbsp; × stress point centroid</span>
+<span><b>Warna kontur:</b> biru rendah → merah tinggi</span>
+</div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px">
+      <h2>Ringkasan Perhitungan dan Interpretasi</h2>
+      <div class="body">
+        <div class="grid2">
+          <div>
+            <table>
+              <tbody id="summaryRows">
+                <tr><th>Parameter</th><th>Nilai</th></tr>
+                <tr><td>Jumlah node</td><td>-</td></tr>
+                <tr><td>Jumlah elemen segitiga</td><td>-</td></tr>
+                <tr><td>Derajat bebas</td><td>-</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="small" style="line-height:1.55">
+            <b>Makna hasil:</b><br>
+            Settlement menunjukkan penurunan vertikal di bawah pondasi. Pada Linear Elastic respons P–s tetap linear. Pada Mohr–Coulomb Perfect Plasticity, load increment dapat menghasilkan yielding, pertumbuhan zona plastis, penurunan tangent stiffness, dan kurva P–s nonlinier. Gunakan menu Plasticity / Yield dan Load–Settlement untuk interpretasi.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="footer">
+  Program edukatif FEM pondasi dangkal 2D dengan Linear Elastic dan Mohr–Coulomb Perfect Plasticity. Bukan pengganti analisis geoteknik rinci atau validasi desain final. Implementasi plastisitas bersifat edukatif dan belum mencakup hardening/softening, interface pondasi–tanah, maupun coupled seepage–consolidation penuh.
+</div>
+
+<script>
+let model=null; let currentView='uy'; let lastCSV='';
+let generatedMesh=null; let meshReady=false; let meshDirty=true; let analysisRunning=false;
+function val(id){return parseFloat(document.getElementById(id).value)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function fmt(x,d=2){ if(!isFinite(x)) return '-'; return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d,minimumFractionDigits:d}); }
+function fmtPrecise(x){
+  if(!isFinite(x)) return '-';
+  const a=Math.abs(x);
+  if(a>0 && a<1e-3) return Number(x).toExponential(3).replace('e','E');
+  return Number(x).toLocaleString('id-ID',{maximumFractionDigits:6,minimumFractionDigits:6});
+}
+function meshPresetValues(v){return {coarse:[12,6],medium:[24,12],fine:[30,15],veryfine:[36,20]}[v]||null;}
+function applyMeshPreset(){const p=document.getElementById('meshPreset').value, a=meshPresetValues(p); if(a){document.getElementById('nx').value=a[0];document.getElementById('ny').value=a[1];} updateMeshInfo(); markMeshDirty();}
+function setCustomMesh(){document.getElementById('meshPreset').value='custom';updateMeshInfo();markMeshDirty();}
+function updateMeshInfo(){const nx=Math.round(val('nx')||0),ny=Math.round(val('ny')||0),nodes=(nx+1)*(ny+1),elems=2*nx*ny; const r=document.getElementById('refineFooting')?.value==='yes'?'rapat di sekitar pondasi':'seragam'; const el=document.getElementById('meshInfo'); if(el)el.innerHTML=`${nx} × ${ny} sel (${r}) → <b>${elems}</b> elemen CST dan <b>${nodes}</b> node.`;}
+function makeCoordsX(W,nx,B,x0,refine){if(refine!=='yes')return Array.from({length:nx+1},(_,i)=>W*i/nx); const L=Math.max(0,x0-B*1.25),R=Math.min(W,x0+B*1.25),a=Math.max(2,Math.round(nx*.25)),b=Math.max(4,nx-2*a); const out=[]; for(let i=0;i<=a;i++)out.push(L*i/a); for(let i=1;i<=b;i++)out.push(L+(R-L)*i/b); for(let i=1;i<=a;i++)out.push(R+(W-R)*i/a); return out.slice(0,nx+1);}
+function makeCoordsY(H,ny,refine){if(refine!=='yes')return Array.from({length:ny+1},(_,j)=>H*j/ny); const t=.45*H,a=Math.max(2,Math.round(ny*.6)),b=ny-a,out=[]; for(let j=0;j<=a;j++){const q=j/a;out.push(t*q*q);} for(let j=1;j<=b;j++)out.push(t+(H-t)*j/b); return out;}
+
+
+function buildMirrorSymmetricTriangles(nx,ny,xCoords,xSym){
+  const elems=[];
+  const tol=Math.max(1e-10,(xCoords[xCoords.length-1]-xCoords[0])*1e-9);
+  const axisNodeIndex=xCoords.findIndex(x=>Math.abs(x-xSym)<=tol);
+  const axisAligned=axisNodeIndex>=0;
+
+  for(let j=0;j<ny;j++){
+    for(let i=0;i<nx;i++){
+      const n1=nodeId(i,j,nx), n2=nodeId(i+1,j,nx),
+            n3=nodeId(i+1,j+1,nx), n4=nodeId(i,j+1,nx);
+      const xL=xCoords[i], xR=xCoords[i+1], xc=(xL+xR)/2;
+
+      // Mirror-paired orientation about the footing centerline:
+      // left side  : diagonal n1-n3 (\)
+      // right side : diagonal n2-n4 (/)
+      // A reflected cell therefore receives the reflected diagonal.
+      if(xc < xSym-tol){
+        elems.push([n1,n2,n3]);
+        elems.push([n1,n3,n4]);
+      }else if(xc > xSym+tol){
+        elems.push([n1,n2,n4]);
+        elems.push([n2,n3,n4]);
+      }else{
+        // This only occurs when the symmetry axis passes through a cell instead of
+        // coinciding with a grid line. Exact mirror symmetry cannot be achieved
+        // with only two CST triangles in that single quadrilateral; alternate the
+        // diagonal by row to avoid a persistent one-direction mesh bias.
+        if(j%2===0){
+          elems.push([n1,n2,n3]);
+          elems.push([n1,n3,n4]);
+        }else{
+          elems.push([n1,n2,n4]);
+          elems.push([n2,n3,n4]);
+        }
+      }
+    }
+  }
+  return {elems,axisAligned,axisNodeIndex};
+}
+
+function updateWorkflowStatus(){
+  const wfMesh=document.getElementById('wfMesh');
+  const wfMaterial=document.getElementById('wfMaterial');
+  const wfAnalysis=document.getElementById('wfAnalysis');
+  const runBtn=document.getElementById('runAnalysisBtn');
+  const mat=document.getElementById('materialModel')?.value;
+  if(wfMesh){
+    wfMesh.className='workflowStep '+(meshReady&&!meshDirty?'ok':'warn');
+    wfMesh.textContent=meshReady&&!meshDirty?'① Mesh: ✓ Generated':'① Mesh: Perlu Generate';
+  }
+  if(wfMaterial){
+    wfMaterial.className='workflowStep '+(mat?'ok':'');
+    wfMaterial.textContent=mat==='mc'?'② Material: ✓ Mohr–Coulomb':'② Material: ✓ Linear Elastic';
+  }
+  const ready=meshReady&&!meshDirty&&!!mat&&!analysisRunning;
+  if(wfAnalysis){
+    wfAnalysis.className='workflowStep '+(ready?'ready':'');
+    wfAnalysis.textContent=analysisRunning?'③ Analysis: Running...':(ready?'③ Analysis: Ready':'③ Analysis: Belum Ready');
+  }
+  if(runBtn) runBtn.disabled=!ready;
+}
+function markMeshDirty(){
+  meshDirty=true;
+  model=null;
+  resetAnalysisProgress();
+  const st=document.getElementById('meshGenerateStatus');
+  if(st) st.innerHTML='Parameter geometri/mesh berubah. <b>Mesh perlu di-generate ulang.</b>';
+  updateWorkflowStatus();
+  draw();
+}
+function meshSignature(){
+  return [
+    val('W'),val('H'),val('B'),val('x0'),
+    Math.round(val('nx')),Math.round(val('ny')),
+    document.getElementById('refineFooting')?.value||'no'
+  ].join('|');
+}
+function generateMesh(){
+  try{
+    const W=val('W'),H=val('H'),B=val('B'),x0=val('x0');
+    let nx=Math.round(val('nx')),ny=Math.round(val('ny'));
+    nx=clamp(nx,4,36);ny=clamp(ny,3,20);
+    document.getElementById('nx').value=nx;document.getElementById('ny').value=ny;
+    if(!(W>0&&H>0&&B>0)) throw new Error('Geometri tidak valid.');
+    if(B>W*0.8) throw new Error('Lebar pondasi terlalu besar dibanding domain. Gunakan B < 0,8 W.');
+    const refine=document.getElementById('refineFooting').value;
+    const xCoords=makeCoordsX(W,nx,B,x0,refine);
+    const yCoords=makeCoordsY(H,ny,refine);
+    const triInfo=buildMirrorSymmetricTriangles(nx,ny,xCoords,x0);
+    const elems=triInfo.elems;
+
+    let dxMin=Infinity,dxMax=0,dyMin=Infinity,dyMax=0;
+    for(let i=0;i<xCoords.length-1;i++){const d=xCoords[i+1]-xCoords[i];dxMin=Math.min(dxMin,d);dxMax=Math.max(dxMax,d);}
+    for(let j=0;j<yCoords.length-1;j++){const d=yCoords[j+1]-yCoords[j];dyMin=Math.min(dyMin,d);dyMax=Math.max(dyMax,d);}
+    let aspectMax=0;
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
+      const dx=xCoords[i+1]-xCoords[i],dy=yCoords[j+1]-yCoords[j];
+      aspectMax=Math.max(aspectMax,Math.max(dx/dy,dy/dx));
+    }
+
+    resetAnalysisProgress();
+    generatedMesh={W,H,B,x0,nx,ny,refine,xCoords:[...xCoords],yCoords:[...yCoords],
+      elems:elems.map(t=>[...t]),signature:meshSignature(),dxMin,dxMax,dyMin,dyMax,aspectMax,
+      triangulation:'mirror-symmetric',axisAligned:triInfo.axisAligned,axisNodeIndex:triInfo.axisNodeIndex};
+    meshReady=true;meshDirty=false;model=null;
+
+    const st=document.getElementById('meshGenerateStatus');
+    if(st) st.innerHTML=
+      '<b>Mesh berhasil dibuat.</b> '+((nx+1)*(ny+1))+' node, '+(2*nx*ny)+' elemen CST. '+
+      'Δx = '+fmt(dxMin,3)+'–'+fmt(dxMax,3)+' m; Δy = '+fmt(dyMin,3)+'–'+fmt(dyMax,3)+
+      ' m; aspect ratio maks. = '+fmt(aspectMax,2)+'. '+
+      '<b>Orientasi diagonal: mirror-symmetric</b> terhadap centerline pondasi x = '+fmt(x0,3)+' m. '+
+      (triInfo.axisAligned
+        ? '<span style="color:#166534"><b>Centerline tepat pada grid line — simetri diskret eksak.</b></span>'
+        : '<span style="color:#92400e"><b>Catatan:</b> centerline tidak tepat pada grid line; sel yang memotong sumbu memakai diagonal bergantian untuk meminimalkan mesh bias.</span>');
+    updateWorkflowStatus();
+    draw();
+  }catch(err){
+    meshReady=false;meshDirty=true;generatedMesh=null;
+    const st=document.getElementById('meshGenerateStatus');
+    if(st) st.innerHTML='<b>Generate Mesh gagal:</b> '+err.message;
+    updateWorkflowStatus();
+  }
+}
+function drawGeneratedMeshPreview(ctx,cv){
+  const g=generatedMesh;
+  if(!g){drawEmpty(ctx,cv);return;}
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,cv.width,cv.height);
+  const left=82,right=24,top=70,bottom=112;
+  const scale=Math.min((cv.width-left-right)/g.W,(cv.height-top-bottom)/g.H);
+  const ox=left+(cv.width-left-right-g.W*scale)/2,oy=top;
+  const X=x=>ox+x*scale,Y=y=>oy+y*scale;
+
+  const previewMode=document.getElementById('previewMeshMode')?.value||'mesh';
+  const labelDensity=document.getElementById('previewLabelDensity')?.value||'auto';
+  const showNodes=previewMode==='nodes'||previewMode==='both';
+  const showStress=previewMode==='stress'||previewMode==='both';
+
+  function labelStep(total){
+    if(labelDensity==='all') return 1;
+    if(labelDensity!=='auto') return Math.max(1,parseInt(labelDensity)||1);
+    if(total<=50) return 1;
+    if(total<=120) return 2;
+    if(total<=250) return 3;
+    if(total<=500) return 5;
+    return 10;
+  }
+
+  ctx.fillStyle='#fff7d0';ctx.fillRect(X(0),Y(0),g.W*scale,g.H*scale);
+  ctx.strokeStyle='#111';ctx.lineWidth=2;ctx.strokeRect(X(0),Y(0),g.W*scale,g.H*scale);
+
+  // CST mesh
+  ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=.7;
+  for(const tri of g.elems){
+    const pts=tri.map(id=>{
+      const i=id%(g.nx+1),j=Math.floor(id/(g.nx+1));
+      return {x:g.xCoords[i],y:g.yCoords[j]};
+    });
+    ctx.beginPath();ctx.moveTo(X(pts[0].x),Y(pts[0].y));
+    ctx.lineTo(X(pts[1].x),Y(pts[1].y));
+    ctx.lineTo(X(pts[2].x),Y(pts[2].y));
+    ctx.closePath();ctx.stroke();
+  }
+
+  // Footing
+  const fL=X(g.x0-g.B/2),fR=X(g.x0+g.B/2);
+  ctx.fillStyle='#0f78bd';ctx.fillRect(fL,Y(0)-16,fR-fL,16);
+
+  // Symmetry centerline
+  ctx.save();
+  ctx.strokeStyle='rgba(220,38,38,.75)';
+  ctx.lineWidth=1.2;ctx.setLineDash([6,5]);
+  ctx.beginPath();ctx.moveTo(X(g.x0),Y(0)-22);ctx.lineTo(X(g.x0),Y(g.H));ctx.stroke();
+  ctx.restore();
+
+  // Nodal points and sampled node labels.
+  if(showNodes){
+    const totalNodes=(g.nx+1)*(g.ny+1), nStep=labelStep(totalNodes);
+    ctx.save();
+    ctx.font='10px Arial';ctx.textAlign='left';ctx.textBaseline='bottom';
+    for(let j=0;j<=g.ny;j++){
+      for(let i=0;i<=g.nx;i++){
+        const id=nodeId(i,j,g.nx), px=X(g.xCoords[i]), py=Y(g.yCoords[j]);
+        ctx.beginPath();ctx.arc(px,py,2.4,0,Math.PI*2);
+        ctx.fillStyle='#075985';ctx.fill();
+        if(id%nStep===0){
+          ctx.fillStyle='#075985';
+          ctx.fillText('N'+(id+1),px+4,py-3);
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // CST stress points: one centroid / constant-strain triangle.
+  // Before Run there are no stress values yet, so only location + element ID are shown.
+  if(showStress){
+    const eStep=labelStep(g.elems.length);
+    ctx.save();
+    ctx.font='10px Arial';ctx.textAlign='left';ctx.textBaseline='middle';
+    g.elems.forEach((tri,eid)=>{
+      let cx=0,cy=0;
+      for(const id of tri){
+        const i=id%(g.nx+1),j=Math.floor(id/(g.nx+1));
+        cx+=g.xCoords[i]/3;cy+=g.yCoords[j]/3;
+      }
+      const px=X(cx),py=Y(cy);
+      ctx.strokeStyle='#b91c1c';ctx.lineWidth=1.1;
+      ctx.beginPath();ctx.moveTo(px-3,py-3);ctx.lineTo(px+3,py+3);
+      ctx.moveTo(px+3,py-3);ctx.lineTo(px-3,py+3);ctx.stroke();
+      if(eid%eStep===0){
+        ctx.fillStyle='#991b1b';
+        ctx.fillText('E'+(eid+1),px+4,py);
+      }
+    });
+    ctx.restore();
+  }
+
+  // Titles and preview legend.
+  ctx.fillStyle='#17324d';ctx.font='bold 16px Arial';ctx.textAlign='center';
+  ctx.fillText('Preview Mesh — Generated',cv.width/2,28);
+  ctx.font='12px Arial';ctx.fillStyle='#64748b';
+  ctx.fillText(`${(g.nx+1)*(g.ny+1)} node | ${2*g.nx*g.ny} elemen CST | mirror-symmetric triangulation | aspect ratio maks. ${fmt(g.aspectMax,2)}`,cv.width/2,48);
+
+  let legendText='Preview: Mesh';
+  if(showNodes) legendText+=' | ● = nodal point';
+  if(showStress) legendText+=' | × = stress point / centroid CST';
+  ctx.font='11px Arial';ctx.fillStyle='#475569';
+  ctx.fillText(legendText,cv.width/2,cv.height-48);
+  if(showStress){
+    ctx.fillStyle='#64748b';
+    ctx.fillText('Sebelum Run Analysis, stress point hanya menunjukkan lokasi; nilai tegangan belum tersedia.',cv.width/2,cv.height-30);
+  }
+  ctx.textAlign='start';
+}
+
+
+function uiYield(){return new Promise(resolve=>setTimeout(resolve,0));}
+function setAnalysisProgress(percent,title,detail,state='active'){
+  const box=document.getElementById('analysisProgress'),fill=document.getElementById('progressFill'),
+        pct=document.getElementById('progressPercent'),ttl=document.getElementById('progressTitle'),
+        det=document.getElementById('progressDetail');
+  const p=Math.max(0,Math.min(100,Number(percent)||0));
+  if(box)box.className='analysisProgress '+state;
+  if(fill)fill.style.width=p.toFixed(1)+'%';
+  if(pct)pct.textContent=(p<10?p.toFixed(1):p.toFixed(0))+'%';
+  if(ttl)ttl.textContent=title||'Analysis Progress';
+  if(det)det.innerHTML=detail||'';
+}
+function resetAnalysisProgress(){
+  const box=document.getElementById('analysisProgress');
+  if(box)box.className='analysisProgress';
+  const fill=document.getElementById('progressFill');if(fill)fill.style.width='0%';
+  const pct=document.getElementById('progressPercent');if(pct)pct.textContent='0%';
+  const det=document.getElementById('progressDetail');if(det)det.textContent='Menunggu analisis...';
+}
+
+function resetDefault(){
+  const defaults={W:20,H:10,B:3,x0:10,nx:24,ny:12,E:20000,nu:0.30,gamma:18,q:150,defScale:80};
+  for(const k in defaults) document.getElementById(k).value=defaults[k];
+  document.getElementById('selfWeight').value='no';
+  document.getElementById('materialModel').value='elastic'; toggleMaterialModel();
+  document.getElementById('loadMode').value='load'; toggleLoadInput();
+  meshReady=false;meshDirty=true;generatedMesh=null;model=null;
+  resetAnalysisProgress();
+  generateMesh();
+}
+function setView(v,el){ currentView=v; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); draw(); }
+function nodeId(i,j,nx){return j*(nx+1)+i}
+function addK(K,n,a,b,v){K[a][b]+=v}
+function toggleMaterialModel(){
+  const isMC=document.getElementById('materialModel')?.value==='mc';
+  const el=document.getElementById('mcInputs'); if(el) el.style.display=isMC?'block':'none';
+  const pt=document.getElementById('plasticityTab'); if(pt) pt.style.opacity=isMC?'1':'.45';
+  const lt=document.getElementById('loadSettlementTab'); if(lt) lt.style.opacity=isMC?'1':'.7';
+  toggleFlowRule();
+  updateWorkflowStatus();
+}
+function toggleFlowRule(){
+  const assoc=document.getElementById('flowRule')?.value==='assoc';
+  const psi=document.getElementById('psi');
+  const phi=document.getElementById('phi');
+  if(psi){psi.disabled=assoc;if(assoc&&phi)psi.value=phi.value;}
+}
+function toggleLoadInput(){
+  const mode=document.getElementById('loadMode').value;
+  document.getElementById('qRow').style.display=mode==='load'?'block':'none';
+  document.getElementById('dispRow').style.display=mode==='disp'?'block':'none';
+}
+function toggleWaterInput(){const on=document.getElementById('waterTable').value==='yes';document.getElementById('waterInputs').style.display=on?'grid':'none';}
+function toggleDrainInput(){const m=document.getElementById('drainMode').value;document.getElementById('skemptonInputs').style.display=m==='undrained'?'grid':'none';document.getElementById('consInputs').style.display=m==='consolidation'?'grid':'none';}
+async function runAnalysis(){
+  if(analysisRunning)return;
+  analysisRunning=true;
+  updateWorkflowStatus();
+  const runBtn=document.getElementById('runAnalysisBtn');
+  if(runBtn){runBtn.disabled=true;runBtn.textContent='Running...';}
+  setAnalysisProgress(1,'Preparing Analysis','Membaca input, material, boundary condition, dan mesh...','active');
+  await uiYield();
+  try{
+    if(!meshReady || meshDirty || !generatedMesh) throw new Error('Mesh belum siap. Klik Generate Mesh terlebih dahulu.');
+    if(generatedMesh.signature!==meshSignature()) throw new Error('Geometri/mesh berubah setelah Generate Mesh. Generate ulang mesh terlebih dahulu.');
+    const W=generatedMesh.W, H=generatedMesh.H, B=generatedMesh.B, x0=generatedMesh.x0, E=val('E'), nu=val('nu'), gamma=val('gamma'), q=val('q');
+    const materialModel=document.getElementById('materialModel').value;
+    const cohesion=materialModel==='mc'?val('cohesion'):0;
+    const phiDeg=materialModel==='mc'?val('phi'):0;
+    const flowRule=materialModel==='mc'?document.getElementById('flowRule').value:'nonassoc';
+    const psiDeg=materialModel==='mc'?(flowRule==='assoc'?phiDeg:val('psi')):0;
+    const loadSteps=materialModel==='mc'?Math.max(2,Math.round(val('loadSteps'))):1;
+    const maxIter=materialModel==='mc'?Math.max(5,Math.round(val('maxIter'))):1;
+    const tolNR=materialModel==='mc'?Math.max(1e-8,val('tolNR')):1e-6;
+    const plasticTangentRatio=materialModel==='mc'?clamp(val('plasticTangentRatio'),0.001,0.2):1;
+    const loadMode=document.getElementById('loadMode').value;
+    const prescribedDisp=val('prescribedDisp')/1000;
+    const waterOn=document.getElementById('waterTable').value==='yes';
+    const zwt=waterOn?val('zwt'):Infinity, gammaW=waterOn?val('gammaW'):0;
+    const drainMode=waterOn?document.getElementById('drainMode').value:'drained';
+    const skA=waterOn?val('skemptonA'):0, skB=waterOn?val('skemptonB'):0;
+    const kuVol=waterOn?val('kuVol'):0;
+    const timeDays=waterOn?val('timeDays'):0, tauDays=waterOn?val('tauDays'):1;
+    const nx=generatedMesh.nx, ny=generatedMesh.ny;
+    if(!(W>0&&H>0&&B>0&&E>0&&nu>=0&&nu<0.49&&prescribedDisp>=0)) throw new Error('Input geometri/material tidak valid.');
+    if(materialModel==='mc' && !(cohesion>=0&&phiDeg>=0&&phiDeg<55&&psiDeg>=0&&psiDeg<=phiDeg+1e-9)) throw new Error('Parameter Mohr–Coulomb tidak valid. Gunakan 0≤ψ≤φ<55° dan c′≥0.');
+    const xCoords=[...generatedMesh.xCoords], yCoords=[...generatedMesh.yCoords], nodes=[];
+    for(let j=0;j<=ny;j++) for(let i=0;i<=nx;i++) nodes.push({x:xCoords[i],y:yCoords[j],fx:0,fy:0,ux:0,uy:0,fixX:false,fixY:false});
+    const elems=generatedMesh.elems.map(t=>[...t]);
+    const ndof=nodes.length*2;
+    if(ndof>1600) throw new Error('Mesh terlalu besar untuk solver sederhana di browser. Kurangi nx/ny.');
+    setAnalysisProgress(4,'Assembling FEM System','Menyusun matriks kekakuan global dan vektor gaya...','active');
+    await uiYield();
+    const K=Array.from({length:ndof},()=>new Float64Array(ndof));
+    const F=new Float64Array(ndof);
+    const c=E/((1+nu)*(1-2*nu));
+    const Dm=[[c*(1-nu),c*nu,0],[c*nu,c*(1-nu),0],[0,0,c*(1-2*nu)/2]];
+    function elemStiff(tri){
+      const a=nodes[tri[0]], b=nodes[tri[1]], cnode=nodes[tri[2]];
+      const x1=a.x,y1=a.y,x2=b.x,y2=b.y,x3=cnode.x,y3=cnode.y;
+      const A=0.5*((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1));
+      const area=Math.abs(A); const s=A>=0?1:-1;
+      const beta=[y2-y3,y3-y1,y1-y2].map(z=>z*s);
+      const gammaB=[x3-x2,x1-x3,x2-x1].map(z=>z*s);
+      const Bm=[
+        [beta[0],0,beta[1],0,beta[2],0],
+        [0,gammaB[0],0,gammaB[1],0,gammaB[2]],
+        [gammaB[0],beta[0],gammaB[1],beta[1],gammaB[2],beta[2]]
+      ].map(row=>row.map(v=>v/(2*area)));
+      const DB=Array.from({length:3},()=>Array(6).fill(0));
+      for(let i=0;i<3;i++) for(let j=0;j<6;j++) for(let k=0;k<3;k++) DB[i][j]+=Dm[i][k]*Bm[k][j];
+      const ke=Array.from({length:6},()=>Array(6).fill(0));
+      for(let i=0;i<6;i++) for(let j=0;j<6;j++) for(let k=0;k<3;k++) ke[i][j]+=Bm[k][i]*DB[k][j]*area;
+      return {ke,Bm,area};
+    }
+    const elemData=[];
+    for(let e=0;e<elems.length;e++){
+      const tri=elems[e], ed=elemStiff(tri); elemData.push(ed);
+      const dofs=[tri[0]*2,tri[0]*2+1,tri[1]*2,tri[1]*2+1,tri[2]*2,tri[2]*2+1];
+      for(let i=0;i<6;i++) for(let j=0;j<6;j++) K[dofs[i]][dofs[j]]+=ed.ke[i][j];
+      if(document.getElementById('selfWeight').value==='yes'){
+        // body force: gamma acts downward, equivalent nodal load gamma*area/3 per node, per meter thickness
+        for(let k=0;k<3;k++) F[tri[k]*2+1]+=gamma*ed.area/3;
+      }
+    }
+    // Simpan sistem mekanik sebelum aksi pondasi.
+    // F pada tahap ini hanya berisi berat sendiri tanah (jika dipilih).
+    const Kraw=K.map(row=>new Float64Array(row));
+    const Fself=new Float64Array(F);
+
+    // Solver helper untuk kondisi batas standar dan prescribed displacement opsional.
+    function solveCase(Ksource,Fsource,prescribedMap){
+      const KK=Ksource.map(row=>new Float64Array(row));
+      const FF=new Float64Array(Fsource);
+      const fixedCase=[];
+      nodes.forEach((n,idx)=>{
+        if(n.fixX) fixedCase.push(idx*2);
+        if(n.fixY && !(prescribedMap && prescribedMap.has(idx))) fixedCase.push(idx*2+1);
+      });
+      if(prescribedMap) for(const id of prescribedMap.keys()) fixedCase.push(id*2+1);
+      const unique=[...new Set(fixedCase)];
+      for(const dof of unique){
+        const node=Math.floor(dof/2), comp=dof%2;
+        const prescribed=(comp===1 && prescribedMap && prescribedMap.has(node))?prescribedMap.get(node):0;
+        for(let j=0;j<ndof;j++) if(j!==dof) FF[j]-=KK[j][dof]*prescribed;
+        for(let j=0;j<ndof;j++){KK[dof][j]=0;KK[j][dof]=0;}
+        KK[dof][dof]=1; FF[dof]=prescribed;
+      }
+      return solve(KK,FF);
+    }
+
+    // Fungsi recovery tegangan elemen dari suatu vektor displacement.
+    function recoverStress(Ucase){
+      return elems.map((tri,eidx)=>{
+        const ue=[Ucase[tri[0]*2],Ucase[tri[0]*2+1],Ucase[tri[1]*2],Ucase[tri[1]*2+1],Ucase[tri[2]*2],Ucase[tri[2]*2+1]];
+        const eps=[0,0,0];
+        for(let i=0;i<3;i++) for(let j=0;j<6;j++) eps[i]+=elemData[eidx].Bm[i][j]*ue[j];
+        const sig=[0,0,0];
+        for(let i=0;i<3;i++) for(let j=0;j<3;j++) sig[i]+=Dm[i][j]*eps[j];
+        return {eps,sig};
+      });
+    }
+
+    // Identifikasi node kontak pondasi pada permukaan.
+    const xL=x0-B/2, xR=x0+B/2; let contactNodes=[]; let totalLoad=0;
+    for(let i=0;i<nx;i++){
+      const nA=nodeId(i,0,nx), nB=nodeId(i+1,0,nx);
+      const xm=(nodes[nA].x+nodes[nB].x)/2;
+      if(xm>=xL-1e-9 && xm<=xR+1e-9) contactNodes.push(nA,nB);
+    }
+    contactNodes=[...new Set(contactNodes)].sort((a,b)=>a-b);
+    // Kondisi batas geometri standar.
+    for(let i=0;i<=nx;i++){ nodes[nodeId(i,ny,nx)].fixX=true; nodes[nodeId(i,ny,nx)].fixY=true; }
+    for(let j=0;j<=ny;j++){ nodes[nodeId(0,j,nx)].fixX=true; nodes[nodeId(nx,j,nx)].fixX=true; }
+
+    // Baseline geostatik sederhana: berat sendiri saja, tanpa aksi pondasi.
+    // Dipakai untuk memisahkan tegangan awal dari tambahan tegangan akibat pondasi.
+    setAnalysisProgress(10,'Initial State','Menghitung kondisi awal / berat sendiri tanah...','active');
+    await uiYield();
+    const Ubase = document.getElementById('selfWeight').value==='yes'
+      ? solveCase(Kraw,Fself,null)
+      : new Float64Array(ndof);
+    const baseRec = recoverStress(Ubase);
+
+    // Sistem loaded dimulai dari berat sendiri yang sama.
+    const Floaded=new Float64Array(Fself);
+    totalLoad=0;
+    if(loadMode==='load'){
+      for(let i=0;i<nx;i++){
+        const nA=nodeId(i,0,nx),nB=nodeId(i+1,0,nx),xm=(nodes[nA].x+nodes[nB].x)/2;
+        if(xm>=xL-1e-9&&xm<=xR+1e-9){
+          const Lseg=nodes[nB].x-nodes[nA].x,f=q*Lseg/2;
+          Floaded[nA*2+1]+=f;Floaded[nB*2+1]+=f;totalLoad+=q*Lseg;
+        }
+      }
+    }
+
+    // Untuk input deformasi, s dianggap sebagai PENURUNAN TAMBAHAN terhadap kondisi berat sendiri.
+    // Ini mencegah imposed displacement tampak "mengangkat" tanah ketika settlement akibat self-weight sudah ada.
+    let prescribedMap=null;
+    if(loadMode==='disp'){
+      prescribedMap=new Map();
+      for(const id of contactNodes){
+        const baseUy=Ubase[id*2+1]||0;
+        prescribedMap.set(id,baseUy+Math.abs(prescribedDisp));
+      }
+    }
+
+    // ------------------------------------------------------------
+    // SOLUSI MATERIAL
+    // Linear Elastic: satu kali solve seperti versi sebelumnya.
+    // Mohr-Coulomb: incremental loading + modified Newton dengan
+    // elastic predictor / perfect-plastic stress correction.
+    // ------------------------------------------------------------
+    let U, loadedRec, loadSettlement=[], converged=true, lastConvergedStep=0;
+
+    function matVec(M,v){
+      const r=new Float64Array(M.length);
+      for(let i=0;i<M.length;i++){let s=0;for(let j=0;j<v.length;j++)s+=M[i][j]*v[j];r[i]=s;}
+      return r;
+    }
+    function addInternalForce(Fint, tri, ed, sig){
+      const dofs=[tri[0]*2,tri[0]*2+1,tri[1]*2,tri[1]*2+1,tri[2]*2,tri[2]*2+1];
+      for(let a=0;a<6;a++){
+        let s=0; for(let k=0;k<3;k++) s+=ed.Bm[k][a]*sig[k];
+        Fint[dofs[a]]+=s*ed.area;
+      }
+    }
+    function principalCompressionPositive(sig){
+      // FEM compression-negative -> geotechnical compression-positive.
+      const sx=-sig[0], sy=-sig[1], t=-sig[2];
+      const mean=(sx+sy)/2, rad=Math.sqrt(((sx-sy)/2)**2+t*t);
+      return {s1:mean+rad,s3:mean-rad,theta:0.5*Math.atan2(2*t,sx-sy)};
+    }
+    function fromPrincipalCompressionPositive(s1,s3,theta){
+      const c2=Math.cos(2*theta),s2=Math.sin(2*theta),mean=(s1+s3)/2,rad=(s1-s3)/2;
+      const sxC=mean+rad*c2, syC=mean-rad*c2, tC=rad*s2;
+      return [-sxC,-syC,-tC];
+    }
+    function mcCorrect(sigTrial, edState){
+      const ph=phiDeg*Math.PI/180, ps=psiDeg*Math.PI/180;
+      const pr=principalCompressionPositive(sigTrial);
+      const sinp=Math.sin(ph), cosp=Math.cos(ph);
+      // 2D principal-stress representation of MC:
+      // f=(σ1-σ3) - (σ1+σ3)sinφ - 2c cosφ <= 0
+      const f=(pr.s1-pr.s3)-(pr.s1+pr.s3)*sinp-2*cohesion*cosp;
+      const denom=Math.max(Math.abs((pr.s1-pr.s3)) + Math.abs((pr.s1+pr.s3)*sinp) + 2*cohesion*cosp,1e-9);
+      const yieldRatio=Math.max(0,(pr.s1-pr.s3)/Math.max((pr.s1+pr.s3)*sinp+2*cohesion*cosp,1e-9));
+      if(f<=1e-7){
+        return {sig:sigTrial.slice(),plastic:false,f,yieldRatio,
+          dep:[0,0,0],dlambda:0};
+      }
+
+      // Perfect-plastic correction in principal plane.
+      // Project trial point toward MC line along a non-associated flow direction.
+      // g=(σ1-σ3)-(σ1+σ3)sinψ
+      const sing=Math.sin(ps);
+      const nF1=1-sinp, nF3=-(1+sinp);
+      const nG1=1-sing, nG3=-(1+sing);
+
+      // Approximate principal elastic compliance projected on flow direction.
+      // Plane-strain elastic modulus factors; regularized to keep browser solver stable.
+      const G=E/(2*(1+nu)), Kb=E/(3*(1-2*nu));
+      const Hmc=Math.max(1e-9,
+        Kb*(nF1+nF3)*(nG1+nG3) +
+        G*(nF1-nF3)*(nG1-nG3));
+      const dl=Math.max(0,f/Hmc);
+
+      // Plastic principal strain increment.
+      const dep1=dl*nG1, dep3=dl*nG3;
+
+      // Stress correction using isotropic elasticity in principal basis.
+      const dmean=Kb*(dep1+dep3);
+      const ddev=G*(dep1-dep3);
+      let s1=pr.s1-(dmean+ddev);
+      let s3=pr.s3-(dmean-ddev);
+
+      // Final exact projection to MC yield line at fixed mean if numerical drift remains.
+      const mean=(s1+s3)/2;
+      const qYield=Math.max(0,2*mean*sinp+2*cohesion*cosp);
+      s1=mean+qYield/2; s3=mean-qYield/2;
+
+      const sig=fromPrincipalCompressionPositive(s1,s3,pr.theta);
+      const epsPv=dep1+dep3;
+      const gammaP=Math.abs(dep1-dep3);
+      const eqp=Math.sqrt(2/3*(dep1*dep1+dep3*dep3));
+      return {sig,plastic:true,f,yieldRatio:Math.max(1,yieldRatio),
+        dep:[epsPv/2,epsPv/2,gammaP],dlambda:dl,epsPv,gammaP,eqp};
+    }
+
+    if(materialModel==='elastic'){
+      setAnalysisProgress(35,'Linear Elastic Solver','Menyelesaikan sistem persamaan global K·U = F...','active');
+      await uiYield();
+      U=solveCase(Kraw,Floaded,prescribedMap);
+      setAnalysisProgress(85,'Recovering Results','Menghitung displacement, strain, stress, dan output elemen...','active');
+      await uiYield();
+      loadedRec=recoverStress(U);
+      loadSettlement=[{step:0,ratio:0,load:0,settlement:0,plastic:0,iterations:0},
+                      {step:1,ratio:1,load:totalLoad,settlement:0,plastic:0,iterations:1}];
+    }else{
+      if(loadMode!=='load') throw new Error('Mohr–Coulomb versi ini menggunakan mode Input Beban Merata q. Mode prescribed settlement tetap tersedia untuk Linear Elastic.');
+      setAnalysisProgress(15,'Mohr–Coulomb Solver','Memulai incremental loading dan iterasi nonlinear...','active');
+      await uiYield();
+      U=new Float64Array(Ubase);
+      const state=elemData.map((ed,e)=>({
+        sig:baseRec[e].sig.slice(),
+        epsTotal:baseRec[e].eps.slice(),
+        epsP:[0,0,0],
+        eqp:0,epsPv:0,gammaP:0,isPlastic:false,yieldRatio:0,f:0
+      }));
+
+      const Ffoot=new Float64Array(ndof);
+      for(let i=0;i<ndof;i++) Ffoot[i]=Floaded[i]-Fself[i];
+      const normFoot=Math.max(1e-12,Math.sqrt(Ffoot.reduce((s,v)=>s+v*v,0)));
+
+      for(let step=1;step<=loadSteps;step++){
+        const ratio=step/loadSteps;
+        const Ftarget=new Float64Array(ndof);
+        for(let i=0;i<ndof;i++)Ftarget[i]=Fself[i]+ratio*Ffoot[i];
+
+        let iterUsed=0, stepOK=false, lastRel=Infinity, lastRn=Infinity, lastRefNorm=0;
+        for(let it=0;it<maxIter;it++){
+          iterUsed=it+1;
+          const Fint=new Float64Array(ndof);
+          const trialStates=[];
+          let plasticCount=0;
+
+          for(let e=0;e<elems.length;e++){
+            const tri=elems[e],ed=elemData[e];
+            const ue=[U[tri[0]*2],U[tri[0]*2+1],U[tri[1]*2],U[tri[1]*2+1],U[tri[2]*2],U[tri[2]*2+1]];
+            const eps=[0,0,0];
+            for(let a=0;a<3;a++)for(let b=0;b<6;b++)eps[a]+=ed.Bm[a][b]*ue[b];
+
+            const elasticStrain=[
+              eps[0]-state[e].epsP[0],
+              eps[1]-state[e].epsP[1],
+              eps[2]-state[e].epsP[2]
+            ];
+            const sigTrial=[0,0,0];
+            for(let a=0;a<3;a++)for(let b=0;b<3;b++)sigTrial[a]+=Dm[a][b]*elasticStrain[b];
+
+            const corr=mcCorrect(sigTrial,state[e]);
+            trialStates.push({eps,corr});
+            if(corr.plastic)plasticCount++;
+            addInternalForce(Fint,tri,ed,corr.sig);
+          }
+
+          // Residual equilibrium.
+          // IMPORTANT: gaya reaksi pada DOF terkekang BUKAN residual yang harus
+          // dibuat nol. Karena itu norma konvergensi hanya dihitung pada FREE DOF.
+          const R=new Float64Array(ndof);
+          for(let i=0;i<ndof;i++) R[i]=Ftarget[i]-Fint[i];
+
+          const fixed=[];
+          nodes.forEach((n,id)=>{
+            if(n.fixX) fixed.push(id*2);
+            if(n.fixY) fixed.push(id*2+1);
+          });
+          const fixedSet=new Set(fixed);
+
+          let rn2=0, ref2=0, freeCount=0;
+          for(let i=0;i<ndof;i++){
+            if(fixedSet.has(i)) continue;
+            rn2 += R[i]*R[i];
+            ref2 += Ftarget[i]*Ftarget[i];
+            freeCount++;
+          }
+          const rn=Math.sqrt(rn2);
+          // Reference load is also evaluated on free DOFs. A small floor prevents
+          // division by zero at very small load levels.
+          const refNorm=Math.max(Math.sqrt(ref2), normFoot*ratio*1e-6, 1e-12);
+          const rel=rn/refNorm;
+          lastRel=rel; lastRn=rn; lastRefNorm=refNorm;
+
+          const mcPct=15+70*((step-1)+(it+1)/maxIter)/loadSteps;
+          setAnalysisProgress(mcPct,'Mohr–Coulomb Running',
+            'Step <b>'+step+' / '+loadSteps+'</b> &nbsp;|&nbsp; Iteration <b>'+(it+1)+' / '+maxIter+
+            '</b> &nbsp;|&nbsp; Residual = <b>'+fmtPrecise(rel)+
+            '</b> &nbsp;|&nbsp; Plastic trial = <b>'+plasticCount+' / '+elems.length+'</b>','active');
+          await uiYield();
+
+          const KK=Kraw.map(row=>new Float64Array(row));
+
+          // Secant-like global regularization: reduce stiffness contribution globally
+          // according to plastic fraction, while retaining positive stiffness.
+          const plastFrac=plasticCount/Math.max(1,elems.length);
+          const fac=Math.max(plasticTangentRatio,1-0.9*plastFrac);
+          if(fac<0.999){
+            for(let i=0;i<ndof;i++)for(let j=0;j<ndof;j++)KK[i][j]*=fac;
+          }
+
+          // Apply homogeneous correction BCs AFTER the free-DOF residual norm
+          // has been evaluated. Reactions at supports therefore do not contaminate
+          // the convergence check.
+          for(const dof of fixedSet){
+            R[dof]=0;
+            for(let j=0;j<ndof;j++){KK[dof][j]=0;KK[j][dof]=0;}
+            KK[dof][dof]=1;
+          }
+          if(rel<tolNR && it>0){
+            // Commit converged element states.
+            for(let e=0;e<elems.length;e++){
+              const ts=trialStates[e],s=state[e];
+              s.sig=ts.corr.sig.slice();s.epsTotal=ts.eps.slice();
+              if(ts.corr.plastic){
+                s.epsP[0]+=ts.corr.dep[0];s.epsP[1]+=ts.corr.dep[1];s.epsP[2]+=ts.corr.dep[2];
+                s.eqp+=ts.corr.eqp||0;s.epsPv+=ts.corr.epsPv||0;s.gammaP+=ts.corr.gammaP||0;s.isPlastic=true;
+              }
+              s.yieldRatio=Math.max(s.yieldRatio,ts.corr.yieldRatio||0);s.f=ts.corr.f||0;
+            }
+            stepOK=true;lastConvergedStep=step;break;
+          }
+
+          const dU=solve(KK,R);
+          let maxDU=0;
+          for(let i=0;i<ndof;i++){U[i]+=dU[i];maxDU=Math.max(maxDU,Math.abs(dU[i]));}
+
+          // At the final allowed iteration, accept only if residual is reasonably small.
+          if(it===maxIter-1 && rel<Math.max(tolNR*20,0.02)){
+            for(let e=0;e<elems.length;e++){
+              const ts=trialStates[e],s=state[e];
+              s.sig=ts.corr.sig.slice();s.epsTotal=ts.eps.slice();
+              if(ts.corr.plastic){
+                s.epsP[0]+=ts.corr.dep[0];s.epsP[1]+=ts.corr.dep[1];s.epsP[2]+=ts.corr.dep[2];
+                s.eqp+=ts.corr.eqp||0;s.epsPv+=ts.corr.epsPv||0;s.gammaP+=ts.corr.gammaP||0;s.isPlastic=true;
+              }
+              s.yieldRatio=Math.max(s.yieldRatio,ts.corr.yieldRatio||0);s.f=ts.corr.f||0;
+            }
+            stepOK=true;lastConvergedStep=step;
+          }
+        }
+
+        const avgNow=contactNodes.length?contactNodes.reduce((s,id)=>s+U[id*2+1],0)/contactNodes.length:0;
+        const pcount=state.reduce((s,e)=>s+(e.isPlastic?1:0),0);
+        loadSettlement.push({
+          step,ratio,load:totalLoad*ratio,settlement:avgNow*1000,
+          plastic:pcount,iterations:iterUsed,converged:stepOK,
+          residualRatio:lastRel,residualNorm:lastRn,referenceNorm:lastRefNorm
+        });
+        if(stepOK){
+          setAnalysisProgress(15+70*step/loadSteps,'Mohr–Coulomb Running',
+            'Step <b>'+step+' / '+loadSteps+'</b> konvergen dalam <b>'+iterUsed+
+            '</b> iterasi. Plastic element = <b>'+pcount+'</b>.','active');
+          await uiYield();
+        }
+        if(!stepOK){converged=false;break;}
+      }
+
+      loadedRec=elems.map((tri,e)=>({eps:state[e].epsTotal.slice(),sig:state[e].sig.slice()}));
+      for(let e=0;e<elemData.length;e++){
+        elemData[e].isPlastic=state[e].isPlastic;
+        elemData[e].yieldRatio=state[e].yieldRatio;
+        elemData[e].eqPlasticStrain=state[e].eqp;
+        elemData[e].epsPv=state[e].epsPv;
+        elemData[e].gammaP=state[e].gammaP;
+        elemData[e].plasticStrain=state[e].epsP.slice();
+      }
+    }
+
+    nodes.forEach((n,i)=>{
+      n.ux=U[i*2]; n.uy=U[i*2+1];
+      n.uxBase=Ubase[i*2]; n.uyBase=Ubase[i*2+1];
+      n.dux=n.ux-n.uxBase; n.duy=n.uy-n.uyBase;
+    });
+
+    if(materialModel==='elastic' && loadSettlement.length>1){
+      const av=contactNodes.length?contactNodes.reduce((s,id)=>s+nodes[id].uy,0)/contactNodes.length:0;
+      loadSettlement[1].settlement=av*1000;
+    }
+
+    let maxUy=-Infinity,minUy=Infinity,maxSy=-Infinity,minSy=Infinity,maxAbsSy=0,maxAbsDeltaSy=0;
+    nodes.forEach(n=>{maxUy=Math.max(maxUy,n.uy);minUy=Math.min(minUy,n.uy);});
+    elems.forEach((tri,eidx)=>{
+      const lr=loadedRec[eidx],br=baseRec[eidx];
+      elemData[eidx].eps=lr.eps;
+      elemData[eidx].sig=lr.sig;
+      elemData[eidx].sigBase=br.sig;
+      elemData[eidx].sigDelta=lr.sig.map((v,k)=>v-br.sig[k]);
+      if(materialModel==='elastic'){
+        elemData[eidx].isPlastic=false;elemData[eidx].yieldRatio=0;
+        elemData[eidx].eqPlasticStrain=0;elemData[eidx].epsPv=0;elemData[eidx].gammaP=0;
+      }
+      maxSy=Math.max(maxSy,lr.sig[1]);minSy=Math.min(minSy,lr.sig[1]);
+      maxAbsSy=Math.max(maxAbsSy,Math.abs(lr.sig[1]));
+      maxAbsDeltaSy=Math.max(maxAbsDeltaSy,Math.abs(elemData[eidx].sigDelta[1]));
+    });
+    // Tegangan total, tekanan pori, dan tegangan efektif pada centroid elemen.
+    elems.forEach((tri,eidx)=>{
+      const ed=elemData[eidx], cy=(nodes[tri[0]].y+nodes[tri[1]].y+nodes[tri[2]].y)/3;
+      const u0=waterOn && cy>zwt ? gammaW*(cy-zwt) : 0;
+      // Δ strain dari kondisi loaded dikurangi baseline self-weight.
+      const depsX=ed.eps[0]-baseRec[eidx].eps[0];
+      const depsY=ed.eps[1]-baseRec[eidx].eps[1];
+      const epsV=depsX+depsY;
+
+      // Perubahan volume elemen untuk plane strain t = 1 m:
+      // ΔV ≈ εv * V0 = εv * A * t.
+      // Luas elemen tersimpan sebagai ed.area.
+      const dVol=epsV*ed.area*1.0;
+
+      // Elemen dianggap jenuh bila centroid berada pada / di bawah muka air.
+      const saturated=waterOn && cy>=zwt;
+
+      // Solver elastik ini memakai konvensi FEM: kompresi umumnya bernilai negatif.
+      // Persamaan Skempton lazim ditulis dengan kompresi positif, sehingga
+      // tambahan tegangan FEM dibalik tandanya sebelum dihitung principal stress.
+      const sxC=-ed.sigDelta[0];
+      const syC=-ed.sigDelta[1];
+      const txyC=-ed.sigDelta[2];
+      const meanC=(sxC+syC)/2;
+      const radC=Math.sqrt(((sxC-syC)/2)**2+txyC*txyC);
+      const ds1C=meanC+radC;
+      const ds3C=meanC-radC;
+
+      // Kandidat excess pore pressure:
+      // (1) akibat kecenderungan perubahan volume,
+      // (2) Skempton A-B dalam konvensi compression-positive.
+      const duVolRaw=saturated ? (-kuVol*epsV) : 0;
+      const duSkRaw=saturated ? skB*(ds3C+skA*(ds1C-ds3C)) : 0;
+
+      // Untuk model edukatif ini, excess pore pressure positif merepresentasikan
+      // kenaikan tekanan air pori pada pembebanan kompresif.
+      const duVolPotential=Math.max(0,duVolRaw);
+      const duSkPotential=Math.max(0,duSkRaw);
+      const duInitial=(saturated && drainMode!=='drained')
+        ? Math.max(duSkPotential,duVolPotential)
+        : 0;
+
+      let du=duInitial;
+      if(saturated && drainMode==='consolidation')
+        du=duInitial*Math.exp(-Math.max(0,timeDays)/Math.max(.001,tauDays));
+      if(!saturated || drainMode==='drained') du=0;
+
+      ed.depsX=depsX; ed.depsY=depsY; ed.epsV=epsV; ed.dVol=dVol;
+      ed.saturated=saturated;
+      ed.duVolRaw=duVolRaw; ed.duSkRaw=duSkRaw;
+      ed.duVol=duVolPotential; ed.duSk=duSkPotential; ed.duInitial=duInitial;
+      ed.u0=u0; ed.du=du; ed.u=u0+du;
+      ed.sigTotalY=ed.sig[1];
+
+      // Karena tegangan mekanik FEM menggunakan kompresi-negatif:
+      // σ'eff,FEM = σtotal,FEM + u  (ekuivalen dengan σ' = σ - u pada compression-positive).
+      ed.sigEffY=ed.sigTotalY+ed.u;
+    });
+    // Tegangan nodal dihitung sebagai rata-rata hasil elemen yang terhubung pada node.
+    const nodalStressSum=new Float64Array(nodes.length), nodalDeltaStressSum=new Float64Array(nodes.length), nodalStressCount=new Uint32Array(nodes.length);
+    elems.forEach((tri,eidx)=>{
+      const sy=elemData[eidx].sig[1], dsy=elemData[eidx].sigDelta[1];
+      tri.forEach(id=>{nodalStressSum[id]+=sy; nodalDeltaStressSum[id]+=dsy; nodalStressCount[id]++;});
+    });
+    const nodalU0=new Float64Array(nodes.length), nodalDU=new Float64Array(nodes.length), nodalDUVol=new Float64Array(nodes.length), nodalU=new Float64Array(nodes.length), nodalEff=new Float64Array(nodes.length);
+    elems.forEach((tri,eidx)=>tri.forEach(id=>{nodalU0[id]+=elemData[eidx].u0||0;nodalDU[id]+=elemData[eidx].du||0;nodalDUVol[id]+=elemData[eidx].duVol||0;nodalU[id]+=elemData[eidx].u||0;nodalEff[id]+=elemData[eidx].sigEffY||0;}));
+    nodes.forEach((n,i)=>{const c=nodalStressCount[i]||1;n.sy=nodalStressSum[i]/c;n.dsy=nodalDeltaStressSum[i]/c;n.u0=nodalU0[i]/c;n.du=nodalDU[i]/c;n.duVol=nodalDUVol[i]/c;n.upore=nodalU[i]/c;n.syEff=nodalEff[i]/c;});
+    const avgSet=contactNodes.length?contactNodes.reduce((s,id)=>s+nodes[id].uy,0)/contactNodes.length:0;
+    const maxSet=Math.max(...nodes.map(n=>n.uy));
+    setAnalysisProgress(92,'Post-processing','Menyusun kontur, diagram, tabel hasil, dan data output...','active');
+    await uiYield();
+    const plasticCount=elemData.reduce((s,ed)=>s+(ed.isPlastic?1:0),0);
+    const lastStepInfo=loadSettlement.length?loadSettlement[loadSettlement.length-1]:null;
+    model={W,H,B,x0,nx,ny,E,nu,gamma,q,materialModel,cohesion,phiDeg,psiDeg,flowRule,loadSteps,maxIter,tolNR,plasticTangentRatio,
+      waterOn,zwt,gammaW,drainMode,skA,skB,kuVol,timeDays,tauDays,loadMode,prescribedDisp,nodes,elems,elemData,U,totalLoad,
+      contactNodes,minUy,maxUy,minSy,maxSy,maxAbsSy,maxAbsDeltaSy,avgSet,maxSet,ndof,loadSettlement,plasticCount,converged,lastConvergedStep,lastStepInfo};
+    updateOutput(); draw();
+    if(materialModel==='mc'){
+      if(converged){
+        setAnalysisProgress(100,'Analysis Completed',
+          'Mohr–Coulomb selesai. '+lastConvergedStep+' / '+loadSteps+
+          ' load step konvergen; plastic element = '+plasticCount+' / '+elems.length+'.','done');
+        document.getElementById('status').innerHTML=
+          'Analisis selesai — <b>Mohr–Coulomb Perfect Plasticity</b>. '+
+          nodes.length+' node, '+elems.length+' elemen. '+
+          'Plastic element: <b>'+plasticCount+'</b> ('+fmt(100*plasticCount/elems.length,1)+'%). '+
+          'Semua '+lastConvergedStep+' load step konvergen.';
+      }else{
+        const ls=loadSettlement.length?loadSettlement[loadSettlement.length-1]:null;
+        const stopPct=15+70*Math.min(1,(lastConvergedStep+1)/loadSteps);
+        setAnalysisProgress(stopPct,'Stopped — Not Converged',
+          'Berhenti pada step '+(lastConvergedStep+1)+' / '+loadSteps+
+          (ls?' | iteration '+ls.iterations+' / '+maxIter+' | residual = '+fmtPrecise(ls.residualRatio):'')+
+          '. Hasil step gagal tidak di-commit.','failed');
+        document.getElementById('status').innerHTML=
+          '<b>Analisis Mohr–Coulomb TIDAK KONVERGEN.</b> '+
+          nodes.length+' node, '+elems.length+' elemen. '+
+          'Last converged step: <b>'+lastConvergedStep+' / '+loadSteps+'</b>. '+
+          'Gagal pada step <b>'+(lastConvergedStep+1)+'</b>. '+
+          'Plastic element: <b>'+(lastConvergedStep===0?'N/A':plasticCount+' ('+fmt(100*plasticCount/elems.length,1)+'%)')+'</b>. '+
+          (ls?'Residual ratio terakhir = <b>'+fmtPrecise(ls.residualRatio)+'</b>, iterasi = <b>'+ls.iterations+' / '+maxIter+'</b>. ':'')+
+          'Kriteria konvergensi dihitung hanya pada <b>free DOF</b>; gaya reaksi support tidak dimasukkan sebagai residual.';
+      }
+    }else{
+      setAnalysisProgress(100,'Analysis Completed',
+        'Linear Elastic selesai. Displacement, strain, stress, dan output telah diperbarui.','done');
+      document.getElementById('status').innerHTML=
+        'Analisis selesai — <b>Linear Elastic</b>. '+nodes.length+' node dan '+elems.length+' elemen.';
+    }
+  }catch(err){
+    setAnalysisProgress(0,'Analysis Failed','<b>'+err.message+'</b>','failed');
+    document.getElementById('status').innerHTML='<b>Gagal:</b> '+err.message;
+    console.error(err);
+  }finally{
+    analysisRunning=false;
+    if(runBtn)runBtn.textContent='Run Analysis';
+    updateWorkflowStatus();
+  }
+}
+function solve(A,b){
+  const n=b.length; const M=A.map((row,i)=>{const r=new Float64Array(n+1); r.set(row); r[n]=b[i]; return r;});
+  for(let k=0;k<n;k++){
+    let piv=k, max=Math.abs(M[k][k]); for(let i=k+1;i<n;i++){const v=Math.abs(M[i][k]); if(v>max){max=v;piv=i;}}
+    if(max<1e-12) throw new Error('Matriks singular. Periksa boundary condition atau mesh.');
+    if(piv!==k){const tmp=M[k];M[k]=M[piv];M[piv]=tmp;}
+    const pk=M[k][k]; for(let j=k;j<=n;j++) M[k][j]/=pk;
+    for(let i=0;i<n;i++) if(i!==k){ const f=M[i][k]; if(Math.abs(f)>1e-18){ for(let j=k;j<=n;j++) M[i][j]-=f*M[k][j]; } }
+  }
+  const x=new Float64Array(n); for(let i=0;i<n;i++) x[i]=M[i][n]; return x;
+}
+function updateOutput(){
+  if(!model)return; const mm=1000;
+  document.getElementById('k_settle').textContent=fmt(model.maxSet*mm,2);
+  document.getElementById('k_avg').textContent=fmt(model.avgSet*mm,2);
+  document.getElementById('k_load').textContent=fmt(model.totalLoad,2);
+  document.getElementById('k_sig').textContent=fmt(model.maxAbsSy,2);
+  document.getElementById('summaryRows').innerHTML=`
+    <tr><th>Parameter</th><th>Nilai</th></tr>
+    <tr><td>Jumlah node</td><td>${model.nodes.length}</td></tr>
+    <tr><td>Jumlah elemen segitiga</td><td>${model.elems.length}</td></tr>
+    <tr><td>Derajat bebas total</td><td>${model.ndof}</td></tr>
+    <tr><td>Model material</td><td>${model.materialModel==='mc'?'Mohr–Coulomb Perfect Plasticity':'Linear Elastic'}</td></tr>
+    ${model.materialModel==='mc'?`<tr><td>c′ / φ′ / ψ</td><td>${fmt(model.cohesion,2)} kPa / ${fmt(model.phiDeg,1)}° / ${fmt(model.psiDeg,1)}°</td></tr>
+    <tr><td>Elemen plastis</td><td>${model.plasticCount} / ${model.elems.length} (${fmt(100*model.plasticCount/model.elems.length,1)}%)</td></tr>
+    <tr><td>Load step konvergen</td><td>${model.lastConvergedStep} / ${model.loadSteps}</td></tr>
+    <tr><td>Status nonlinear</td><td>${model.converged?'Konvergen':'TIDAK KONVERGEN'}</td></tr>
+    <tr><td>Residual ratio terakhir</td><td>${model.lastStepInfo?fmtPrecise(model.lastStepInfo.residualRatio):'-'}</td></tr>
+    <tr><td>Iterasi step terakhir</td><td>${model.lastStepInfo?model.lastStepInfo.iterations+' / '+model.maxIter:'-'}</td></tr>`:''}
+    <tr><td>Mode input</td><td>${model.loadMode==='load'?'Beban merata / tekanan q':'Deformasi merata pondasi'}</td></tr>
+    <tr><td>${model.loadMode==='load'?'Tekanan pondasi q':'Deformasi target pondasi'}</td><td>${model.loadMode==='load'?fmt(model.q,2)+' kPa':fmt(model.prescribedDisp*1000,2)+' mm'}</td></tr>
+    <tr><td>Beban 2D q × B efektif</td><td>${fmt(model.totalLoad,2)} kN/m</td></tr>
+    <tr><td>Kekakuan awal P/s</td><td>${model.avgSet>0?fmt(model.totalLoad/model.avgSet,2):'-'} kN/m per m</td></tr>
+  `;
+  let rows='node,x_m,y_m,ux_m,uy_m,sy_kPa,u0_kPa,du_kPa,uTotal_kPa,syEff_kPa\n';
+  model.nodes.forEach((n,i)=>rows+=`${i},${n.x},${n.y},${n.ux},${n.uy},${n.sy??0},${n.u0??0},${n.du??0},${n.upore??0},${n.syEff??0}\n`);
+  rows+='\nELEMENT RESULTS\nelement,isPlastic,yieldRatio,eqPlasticStrain,epsPv,gammaP,sx_kPa,sy_kPa,txy_kPa\n';
+  model.elemData.forEach((ed,i)=>rows+=`${i},${ed.isPlastic?1:0},${ed.yieldRatio||0},${ed.eqPlasticStrain||0},${ed.epsPv||0},${ed.gammaP||0},${ed.sig?.[0]||0},${ed.sig?.[1]||0},${ed.sig?.[2]||0}\n`);
+  lastCSV=rows;
+}
+function colorMap(t){
+  t=clamp(t,0,1); const stops=[[20,70,170],[40,170,220],[80,200,120],[245,210,70],[225,60,50]];
+  const p=t*(stops.length-1), i=Math.floor(p), f=p-i; const a=stops[i], b=stops[Math.min(i+1,stops.length-1)];
+  const r=Math.round(a[0]+(b[0]-a[0])*f), g=Math.round(a[1]+(b[1]-a[1])*f), bl=Math.round(a[2]+(b[2]-a[2])*f); return `rgb(${r},${g},${bl})`;
+}
+
+function drawMeshRulers(ctx,m,X,Y,cv){
+  ctx.save();
+  ctx.strokeStyle='#475569'; ctx.fillStyle='#475569'; ctx.lineWidth=1; ctx.font='10px Arial';
+
+  const yAxis=Y(m.H)+16;
+  ctx.beginPath(); ctx.moveTo(X(0),yAxis); ctx.lineTo(X(m.W),yAxis); ctx.stroke();
+  const nxTick=10;
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let i=0;i<=nxTick;i++){
+    const xv=m.W*i/nxTick, px=X(xv);
+    ctx.beginPath(); ctx.moveTo(px,yAxis); ctx.lineTo(px,yAxis+6); ctx.stroke();
+    ctx.fillText(fmt(xv,1),px,yAxis+8);
+  }
+  ctx.font='bold 11px Arial';
+  ctx.fillText('X (m)',cv.width/2,yAxis+26);
+
+  const xAxis=X(0)-16;
+  ctx.beginPath(); ctx.moveTo(xAxis,Y(0)); ctx.lineTo(xAxis,Y(m.H)); ctx.stroke();
+  const nyTick=8;
+  ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.font='10px Arial';
+  for(let j=0;j<=nyTick;j++){
+    const yv=m.H*j/nyTick, py=Y(yv);
+    ctx.beginPath(); ctx.moveTo(xAxis-6,py); ctx.lineTo(xAxis,py); ctx.stroke();
+    ctx.fillText(fmt(yv,1),xAxis-8,py);
+  }
+  ctx.save();
+  ctx.translate(xAxis-46,(Y(0)+Y(m.H))/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.font='bold 11px Arial'; ctx.textAlign='center';
+  ctx.fillText('Y / kedalaman (m)',0,0);
+  ctx.restore();
+  ctx.restore();
+  return yAxis;
+}
+
+function draw(){
+  const toolbar=document.getElementById('toolbar'), canvasBox=document.getElementById('canvasBox'), legend=document.getElementById('legend'), theoryPanel=document.getElementById('theoryPanel');
+  const isTheory=currentView==='theory';
+  toolbar.style.display=isTheory?'none':'flex';
+  canvasBox.style.display=isTheory?'none':'block';
+  legend.style.display=isTheory?'none':'flex';
+  theoryPanel.style.display=isTheory?'block':'none';
+  const previewReady=!model&&generatedMesh&&!meshDirty&&!isTheory;
+  const previewMeshControl=document.getElementById('previewMeshControl');
+  const previewLabelControl=document.getElementById('previewLabelControl');
+  if(previewMeshControl) previewMeshControl.style.display=previewReady?'block':'none';
+  if(previewLabelControl) previewLabelControl.style.display=previewReady?'block':'none';
+
+  const meshResultControl=document.getElementById('meshResultControl');
+  if(meshResultControl) meshResultControl.style.display=(!!model&&currentView==='mesh'&&!isTheory)?'block':'none';
+  const nodeDensityControl=document.getElementById('nodeDensityControl'); if(nodeDensityControl) nodeDensityControl.style.display=(!!model&&currentView==='mesh'&&!isTheory)?'block':'none';
+  const spc=document.getElementById('stressPointControl'); if(spc) spc.style.display=(!!model&&currentView==='mesh'&&!isTheory)?'block':'none';
+  const defc=document.getElementById('defScaleControl'); if(defc) defc.style.display=model?'block':'none';
+  const showc=document.getElementById('showMode')?.parentElement; if(showc) showc.style.display=model?'block':'none';
+  const src=document.getElementById('settlementResultControl'); if(src) src.style.display=(!!model&&currentView==='uy')?'block':'none';
+  const dvc=document.getElementById('deltaVResultControl'); if(dvc) dvc.style.display=(!!model&&currentView==='deltaV')?'block':'none';
+  const prc=document.getElementById('poreResultControl'); if(prc) prc.style.display=(!!model&&currentView==='pore')?'block':'none';
+  const plc=document.getElementById('plasticityResultControl'); if(plc) plc.style.display=(!!model&&currentView==='plasticity')?'block':'none';
+  const isCross=currentView==='cross'; const isBase=currentView==='baseStress';
+  ['crossControl','crossPosControl','crossResultControl'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=isCross?'block':'none';});
+  const brc=document.getElementById('baseResultControl'); if(brc) brc.style.display=isBase?'block':'none';
+  if(isTheory) return;
+  const cv=document.getElementById('cv'), ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,cv.width,cv.height);
+  if(!model){if(generatedMesh&&!meshDirty)drawGeneratedMeshPreview(ctx,cv);else drawEmpty(ctx,cv);return;}
+  if(currentView==='loadsettle'){drawLoadSettlement(ctx,cv);return;}
+  if(currentView==='baseStress'){drawBaseStress(ctx,cv);return;}
+  if(currentView==='cross'){drawCrossSection(ctx,cv);return;}
+  const m=model, leftSpace=82, rightSpace=24, topSpace=88, bottomSpace=235; const scale=Math.min((cv.width-leftSpace-rightSpace)/m.W,(cv.height-topSpace-bottomSpace)/m.H); const ox=leftSpace+(cv.width-leftSpace-rightSpace-m.W*scale)/2, oy=topSpace;
+  const ds=val('defScale'); const mode=document.getElementById('showMode').value;
+  function X(x){return ox+x*scale} function Y(y){return oy+y*scale} function XD(n){return ox+(n.x+n.ux*ds)*scale} function YD(n){return oy+(n.y+n.uy*ds)*scale}
+  // soil background
+  ctx.fillStyle='#fff7d0'; ctx.fillRect(X(0),Y(0),m.W*scale,m.H*scale); ctx.strokeStyle='#111'; ctx.lineWidth=3; ctx.strokeRect(X(0),Y(0),m.W*scale,m.H*scale);
+  const drawDeformed = (mode==='deformed'||mode==='both');
+  const drawOriginal = (mode==='original'||mode==='both'||mode==='meshstress');
+  if(drawDeformed){
+    for(let e=0;e<m.elems.length;e++){
+      const tri=m.elems[e]; let t=0;
+      if(currentView==='uy'){
+        const key=document.getElementById('settlementResult')?.value||'uy';
+        const nodeVal=n=>key==='ux'?n.ux:(key==='utotal'?Math.hypot(n.ux,n.uy):n.uy);
+        const vals=m.nodes.map(nodeVal), mn=Math.min(...vals), mx=Math.max(...vals);
+        const av=(nodeVal(m.nodes[tri[0]])+nodeVal(m.nodes[tri[1]])+nodeVal(m.nodes[tri[2]]))/3;
+        t=(av-mn)/(mx-mn+1e-18);
+      } else if(currentView==='sy'){ const sy=Math.abs(m.elemData[e].sigDelta?.[1]??m.elemData[e].sig[1]); t=sy/((m.maxAbsDeltaSy||m.maxAbsSy)+1e-12);
+      } else if(currentView==='stotal'){ const v=Math.abs(m.elemData[e].sigTotalY||0); const mx=Math.max(...m.elemData.map(ed=>Math.abs(ed.sigTotalY||0)),1e-9); t=v/mx;
+      } else if(currentView==='deltaV'){
+        const key=document.getElementById('deltaVResult')?.value||'epsv';
+        const getVal=ed=>key==='depsy'?(ed.depsY||0):key==='depsx'?(ed.depsX||0):key==='dvol'?(ed.dVol||0):(ed.epsV||0);
+        const vals=m.elemData.map(getVal), mn=Math.min(...vals), mx=Math.max(...vals);
+        const v=getVal(m.elemData[e]);
+        t=(v-mn)/(mx-mn+1e-18);
+      } else if(currentView==='pore'){
+        const key=document.getElementById('poreResult')?.value||'du';
+        const getVal=ed=>key==='u0'?(ed.u0||0):key==='duvol'?(ed.duVol||0):key==='dusk'?(ed.duSk||0):key==='utotal'?(ed.u||0):(ed.du||0);
+        const vals=m.elemData.map(getVal), mn=Math.min(...vals), mx=Math.max(...vals);
+        const v=getVal(m.elemData[e]);
+        t=(v-mn)/(mx-mn+1e-18);
+      } else if(currentView==='seff'){ const v=Math.abs(m.elemData[e].sigEffY||0); const mx=Math.max(...m.elemData.map(ed=>Math.abs(ed.sigEffY||0)),1e-9); t=v/mx;
+      } else if(currentView==='plasticity'){
+        const key=document.getElementById('plasticityResult')?.value||'state';
+        const getVal=ed=>key==='state'?(ed.isPlastic?1:0):key==='yield'?(ed.yieldRatio||0):key==='epspv'?(ed.epsPv||0):key==='gamp'?(ed.gammaP||0):(ed.eqPlasticStrain||0);
+        const vals=m.elemData.map(getVal), mn=Math.min(...vals), mx=Math.max(...vals);
+        const v=getVal(m.elemData[e]);
+        t=key==='state'?v:(v-mn)/(mx-mn+1e-18);
+      } else t=.15;
+      ctx.beginPath(); ctx.moveTo(XD(m.nodes[tri[0]]),YD(m.nodes[tri[0]])); ctx.lineTo(XD(m.nodes[tri[1]]),YD(m.nodes[tri[1]])); ctx.lineTo(XD(m.nodes[tri[2]]),YD(m.nodes[tri[2]])); ctx.closePath(); ctx.fillStyle=colorMap(t); ctx.globalAlpha=.70; ctx.fill(); ctx.globalAlpha=1; ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=.6; ctx.stroke();
+    }
+  }
+  if(drawOriginal){
+    ctx.strokeStyle=mode==='both'?'rgba(0,0,0,.25)':'rgba(0,0,0,.55)'; ctx.lineWidth=.6;
+    for(const tri of m.elems){ctx.beginPath(); ctx.moveTo(X(m.nodes[tri[0]].x),Y(m.nodes[tri[0]].y)); ctx.lineTo(X(m.nodes[tri[1]].x),Y(m.nodes[tri[1]].y)); ctx.lineTo(X(m.nodes[tri[2]].x),Y(m.nodes[tri[2]].y)); ctx.closePath(); ctx.stroke();}
+  }
+  // Pada menu Tampilkan Mesh, tampilkan mesh asli beserta titik nodal dan hasil nodal.
+  if(currentView==='mesh'){
+    const dataMode=document.getElementById('meshDataMode').value;
+    const density=document.getElementById('nodeLabelDensity').value;
+    let step=density==='auto'?Math.max(1,Math.ceil(m.nodes.length/180)):(density==='all'?1:Number(density));
+    ctx.font='10px Arial'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    if(mode!=='meshstress') for(let i=0;i<m.nodes.length;i+=step){
+      const n=m.nodes[i]; const px=X(n.x), py=Y(n.y);
+      ctx.beginPath();ctx.arc(px,py,2.6,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill();
+      let lines=[];
+      if(dataMode==='deformation'||dataMode==='both')lines.push(`Δy=${fmt(n.uy*1000,2)} mm`);
+      if(dataMode==='stress'||dataMode==='both')lines.push(`σy=${fmt(n.sy,1)} kPa`);
+      if(lines.length){const maxW=Math.max(...lines.map(t=>ctx.measureText(t).width)); const h=lines.length*12+3;ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(px-maxW/2-3,py-h-5,maxW+6,h);lines.forEach((t,k)=>{ctx.fillStyle=k===0?'#0b4c7a':'#8a2b06';ctx.fillText(t,px,py-5-k*12);});}
+    }
+    // Stress point terpisah: centroid setiap elemen CST (×).
+    const spMode=(mode==='meshstress')?'points':document.getElementById('stressPointMode').value;
+    if(spMode!=='none'){
+      ctx.font='9px Arial'; ctx.textAlign='left'; ctx.textBaseline='middle';
+      for(let e=0;e<m.elems.length;e+=step){
+        const tri=m.elems[e], a=m.nodes[tri[0]],b=m.nodes[tri[1]],c=m.nodes[tri[2]],
+              px=X((a.x+b.x+c.x)/3), py=Y((a.y+b.y+c.y)/3), sig=m.elemData[e].sig;
+        ctx.strokeStyle='#c51616';ctx.lineWidth=1.6;
+        ctx.beginPath();ctx.moveTo(px-3,py-3);ctx.lineTo(px+3,py+3);ctx.moveTo(px+3,py-3);ctx.lineTo(px-3,py+3);ctx.stroke();
+        if(spMode==='sy') ctx.fillText('σy='+fmt(sig[1],1),px+4,py);
+        else if(spMode==='all') ctx.fillText('σx='+fmt(sig[0],1)+'; σy='+fmt(sig[1],1)+'; τxy='+fmt(sig[2],1),px+4,py);
+      }
+    }
+    ctx.textAlign='start';ctx.textBaseline='alphabetic';
+  }
+  if(m.waterOn && m.zwt>=0 && m.zwt<=m.H){ctx.save();ctx.setLineDash([8,5]);ctx.strokeStyle='#1677c8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(0),Y(m.zwt));ctx.lineTo(X(m.W),Y(m.zwt));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#1677c8';ctx.font='bold 12px Arial';ctx.fillText('MAT z = '+fmt(m.zwt,2)+' m',X(0)+8,Y(m.zwt)-7);ctx.restore();}
+  // footing block and load/deformation visual
+  const fL=X(m.x0-m.B/2), fR=X(m.x0+m.B/2);
+  ctx.fillStyle='#0f78bd';ctx.strokeStyle='#062d49';ctx.lineWidth=2;
+  ctx.fillRect(fL,Y(0)-18,fR-fL,18);ctx.strokeRect(fL,Y(0)-18,fR-fL,18);
+  ctx.fillStyle='#0b4c7a';ctx.fillRect(X(m.x0)-18,Y(0)-62,36,44);ctx.strokeRect(X(m.x0)-18,Y(0)-62,36,44);
+  const labelText=m.loadMode==='load'?'Beban merata q = '+fmt(m.q,1)+' kPa':'Penurunan ditentukan s = '+fmt(m.prescribedDisp*1000,2)+' mm';
+  ctx.font='bold 14px Arial';
+  ctx.fillStyle=m.loadMode==='load'?'#c51616':'#0b4c7a';
+  ctx.textAlign='center';
+  const labelX=clamp(X(m.x0),110,cv.width-110);
+  const labelY=Math.max(20,Y(0)-70);
+  ctx.fillText(labelText,labelX,labelY);
+  ctx.textAlign='start';
+  ctx.strokeStyle=m.loadMode==='load'?'#ef4444':'#0f78bd';ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=2.2;
+  const narr=m.loadMode==='load'?5:3;
+  for(let k=0;k<narr;k++){const xx=fL+(k+1)*(fR-fL)/(narr+1);arrow(ctx,xx,Y(0)-50,xx,Y(0)-21);}
+  // supports
+  // Ruler dan informasi di bawah gambar: jarak dibuat bertingkat agar tidak overlap.
+  const rulerY=drawMeshRulers(ctx,m,X,Y,cv);
+  const colorBarY=Math.max(rulerY+64,cv.height-132);
+
+  // color bar
+  let cbTitle='',cbMin=0,cbMax=0,cbUnit='';
+  if(currentView==='uy'){
+    const key=document.getElementById('settlementResult')?.value||'uy';
+    const nodeVal=n=>key==='ux'?n.ux:(key==='utotal'?Math.hypot(n.ux,n.uy):n.uy);
+    const vals=m.nodes.map(n=>nodeVal(n)*1000);
+    const labels={ux:'Deformasi horizontal Ux',uy:'Deformasi vertikal Uy',utotal:'Deformasi total Utotal = √(Ux² + Uy²)'};
+    cbTitle=labels[key];cbMin=Math.min(...vals,0);cbMax=Math.max(...vals,0);cbUnit=' mm';
+  }
+  else if(currentView==='sy'){cbTitle='Tambahan Tegangan Pondasi |Δσy|';cbMin=0;cbMax=m.maxAbsDeltaSy||m.maxAbsSy;cbUnit=' kPa';}
+  else if(currentView==='stotal'){cbTitle='Tegangan Total Vertikal σy';const a=m.elemData.map(ed=>Math.abs(ed.sigTotalY||0));cbMin=0;cbMax=Math.max(...a,0);cbUnit=' kPa';}
+  else if(currentView==='seff'){cbTitle='Tegangan efektif σ′y';const a=m.elemData.map(ed=>Math.abs(ed.sigEffY||0));cbMin=0;cbMax=Math.max(...a,0);cbUnit=' kPa';}
+  else if(currentView==='plasticity'){
+    const key=document.getElementById('plasticityResult')?.value||'state';
+    const labels={state:'Status material: 0 Elastic → 1 Plastic',yield:'Mobilisasi Mohr–Coulomb / yield ratio',epsp:'Equivalent plastic strain, ε̄p',epspv:'Plastic volumetric strain, εvp',gamp:'Plastic shear strain, γp'};
+    const vals=m.elemData.map(ed=>key==='state'?(ed.isPlastic?1:0):key==='yield'?(ed.yieldRatio||0):key==='epspv'?(ed.epsPv||0):key==='gamp'?(ed.gammaP||0):(ed.eqPlasticStrain||0));
+    cbTitle=labels[key];cbMin=Math.min(...vals,0);cbMax=Math.max(...vals,key==='state'?1:0);cbUnit='';
+  }
+  else if(currentView==='deltaV'){
+    const key=document.getElementById('deltaVResult')?.value||'epsv';
+    const labels={depsy:'Regangan tambahan vertikal, Δεy',depsx:'Regangan tambahan horizontal, Δεx',epsv:'Regangan volumetrik, εv',dvol:'Perubahan volume elemen, ΔV'};
+    const vals=m.elemData.map(ed=>key==='depsy'?(ed.depsY||0):key==='depsx'?(ed.depsX||0):key==='dvol'?(ed.dVol||0):(ed.epsV||0));
+    cbTitle=labels[key];cbMin=Math.min(...vals,0);cbMax=Math.max(...vals,0);cbUnit=key==='dvol'?' m³/m':'';
+  } else if(currentView==='pore'){
+    const key=document.getElementById('poreResult')?.value||'du';
+    const labels={u0:'Tekanan pori hidrostatik, u₀',duvol:'Excess pore pressure akibat ΔV, ΔuΔV',dusk:'Excess pore pressure Skempton, ΔuS',du:'Excess pore pressure aktual, Δu',utotal:'Total pore pressure, u'};
+    const vals=m.elemData.map(ed=>key==='u0'?(ed.u0||0):key==='duvol'?(ed.duVol||0):key==='dusk'?(ed.duSk||0):key==='utotal'?(ed.u||0):(ed.du||0));
+    cbTitle=labels[key];cbMin=Math.min(...vals,0);cbMax=Math.max(...vals,0);cbUnit=' kPa';
+  }
+  const preciseCB=(currentView==='deltaV'||currentView==='plasticity');
+  const cbLeft=(preciseCB?fmtPrecise(cbMin):fmt(cbMin,4))+cbUnit;
+  const cbRight=(preciseCB?fmtPrecise(cbMax):fmt(cbMax,4))+cbUnit;
+  drawColorBar(ctx,cv,cbTitle,cbLeft,cbRight,colorBarY);
+  const infoBase=colorBarY+52;
+  ctx.save();
+  ctx.fillStyle='#0b4c7a';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.font='bold 12px Arial';
+  const hasil1='Hasil Utama: settlement maks = '+fmt(m.maxSet*1000,2)+' mm';
+  const hasil2='settlement rata-rata pondasi = '+fmt(m.avgSet*1000,2)+' mm   |   beban total = '+fmt(m.totalLoad,2)+' kN/m   |   |σy|max = '+fmt(m.maxAbsSy,2)+' kPa';
+  ctx.fillText(hasil1,cv.width/2,infoBase);
+  ctx.font='11px Arial';
+  ctx.fillText(hasil2,cv.width/2,infoBase+20);
+  ctx.restore();
+}
+function arrow(ctx,x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke(); const ang=Math.atan2(y2-y1,x2-x1); const L=8; ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-L*Math.cos(ang-.45),y2-L*Math.sin(ang-.45)); ctx.lineTo(x2-L*Math.cos(ang+.45),y2-L*Math.sin(ang+.45)); ctx.closePath(); ctx.fill();}
+function drawColorBar(ctx,cv,title,left,right,yPos){
+  const w=320,h=14,x=(cv.width-w)/2,y=yPos;
+  ctx.save();
+  for(let i=0;i<w;i++){ctx.fillStyle=colorMap(i/(w-1));ctx.fillRect(x+i,y,1,h);}
+  ctx.strokeStyle='#555';ctx.lineWidth=1;ctx.strokeRect(x,y,w,h);
+  ctx.fillStyle='#1c2b39';ctx.font='bold 12px Arial';ctx.textAlign='center';
+  ctx.fillText(title,cv.width/2,y-8);
+  ctx.font='11px Arial';ctx.textAlign='left';ctx.fillText(left,x,y+h+15);
+  ctx.textAlign='right';ctx.fillText(right,x+w,y+h+15);
+  ctx.restore();
+}
+
+function elemValue(ed,key){if(key==='uy')return null;if(key==='sy')return ed.sigDelta?.[1]??ed.sig[1];if(key==='stotal')return ed.sigTotalY||0;if(key==='seff')return ed.sigEffY||0;if(key==='pore')return ed.u||0;if(key==='du')return ed.du||0;return 0;}
+function drawBaseStress(ctx,cv){
+ const m=model, pad=92, x0=pad, y0=cv.height-pad, w=cv.width-2*pad, h=cv.height-2*pad;
+ const key=(document.getElementById('baseResult')||{}).value||'sy';
+ const labels={uy:'Displacement Uy (mm)',sy:'Tambahan Tegangan Pondasi Δσy (kPa)',stotal:'Tegangan Total Vertikal, σy (kPa)',seff:'Tegangan Efektif σ′y (kPa)',pore:'Tekanan Pori u (kPa)',du:'Excess Pore Pressure Δu (kPa)'};
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
+ if(!m||!m.elems||!m.elemData){ctx.fillStyle='#1c2b39';ctx.font='16px Arial';ctx.fillText('Belum ada hasil FEM. Klik "Hitung FEM" terlebih dahulu.',70,80);return;}
+ const fmin=m.x0-m.B/2,fmax=m.x0+m.B/2,candidates=[];
+ for(let e=0;e<m.elems.length;e++){
+   const tri=m.elems[e],a=m.nodes[tri[0]],b=m.nodes[tri[1]],c=m.nodes[tri[2]],cx=(a.x+b.x+c.x)/3,cy=(a.y+b.y+c.y)/3;
+   if(cx>=fmin-1e-9&&cx<=fmax+1e-9){
+     const ed=m.elemData[e];
+     let v;
+     if(key==='uy') v=((a.uy+b.uy+c.uy)/3)*1000;
+     else v=elemValue(ed,key);
+     if(Number.isFinite(v))candidates.push({x:cx,y:cy,v,e});
+   }
+ }
+ if(!candidates.length){ctx.fillStyle='#1c2b39';ctx.font='bold 16px Arial';ctx.fillText('Tidak ditemukan data hasil pada zona dasar pondasi.',70,80);return;}
+ // Pilih elemen paling dekat dengan dasar pondasi/permukaan untuk setiap kolom x.
+ const byX=new Map();
+ candidates.forEach(p=>{const k=Math.round(p.x*1e6)/1e6;if(!byX.has(k)||p.y<byX.get(k).y)byX.set(k,p);});
+ let pts=Array.from(byX.values()).sort((a,b)=>a.x-b.x);
+ if(pts.length<2){pts=[];for(let i=0;i<=24;i++){const xs=fmin+(fmax-fmin)*i/24;let best=null,bd=Infinity;for(const p of candidates){const d=Math.abs(p.x-xs)*10+p.y;if(d<bd){bd=d;best=p;}}if(best)pts.push({...best,x:xs});}}
+ const vals=pts.map(p=>p.v);let minV=Math.min(...vals),maxV=Math.max(...vals);
+ if(Math.abs(maxV-minV)<1e-12){const d=Math.max(Math.abs(maxV)*.15,1);minV-=d;maxV+=d;}else{const d=(maxV-minV)*.15;minV-=d;maxV+=d;}
+ const sx=p=>x0+(p.x-fmin)/(fmax-fmin)*w, sy=v=>y0-(v-minV)/(maxV-minV)*h;
+ // axes/grid
+ ctx.strokeStyle='#243447';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0+w,y0);ctx.moveTo(x0,y0);ctx.lineTo(x0,y0-h);ctx.stroke();
+ ctx.font='11px Arial';ctx.fillStyle='#566575';ctx.textAlign='right';
+ for(let i=0;i<=5;i++){const v=minV+(maxV-minV)*i/5,Y=y0-h*i/5;ctx.strokeStyle='#e5eaf0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,Y);ctx.lineTo(x0+w,Y);ctx.stroke();ctx.fillText(v.toFixed(2),x0-8,Y+4);}
+ ctx.textAlign='center';for(let i=0;i<=4;i++){const xv=fmin+(fmax-fmin)*i/4,X=x0+w*i/4;ctx.fillStyle='#566575';ctx.fillText(xv.toFixed(2),X,y0+20);}
+ // curve
+ ctx.strokeStyle='#0f78bd';ctx.lineWidth=2.5;ctx.beginPath();pts.forEach((p,i)=>{const X=sx(p),Y=sy(p.v);if(i)ctx.lineTo(X,Y);else ctx.moveTo(X,Y);});ctx.stroke();
+ // points and numeric labels: position x and output value
+ pts.forEach((p,i)=>{const X=sx(p),Y=sy(p.v);ctx.fillStyle='#c51616';ctx.beginPath();ctx.arc(X,Y,4,0,Math.PI*2);ctx.fill();
+   const label='x='+p.x.toFixed(2)+'\n'+p.v.toFixed(2);
+   ctx.font='10px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+   const ly=(i%2===0?Y-26:Y+26);
+   const lines=['x = '+p.x.toFixed(2)+' m',p.v.toFixed(2)+(key==='uy'?' mm':' kPa')];
+   const bw=Math.max(ctx.measureText(lines[0]).width,ctx.measureText(lines[1]).width)+8,bh=26;
+   ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(X-bw/2,ly-bh/2,bw,bh);
+   ctx.strokeStyle='rgba(40,60,80,.28)';ctx.lineWidth=.7;ctx.strokeRect(X-bw/2,ly-bh/2,bw,bh);
+   ctx.fillStyle='#263746';ctx.fillText(lines[0],X,ly-6);ctx.fillText(lines[1],X,ly+6);
+ });
+ ctx.fillStyle='#1c2b39';ctx.textAlign='left';ctx.font='bold 17px Arial';ctx.fillText('Diagram di Dasar Pondasi: '+labels[key],x0,30);
+ ctx.font='12px Arial';ctx.fillText('Setiap titik menunjukkan posisi x dan nilai output hasil FEM pada elemen teratas di bawah pondasi.',x0,52);
+ ctx.textAlign='center';ctx.fillText('Posisi sepanjang dasar pondasi, x (m)',x0+w/2,y0+48);
+ ctx.save();ctx.translate(18,y0-h/2+40);ctx.rotate(-Math.PI/2);ctx.fillText(labels[key],0,0);ctx.restore();
+ ctx.fillStyle='#667';ctx.font='11px Arial';ctx.textAlign='left';ctx.fillText('● Titik output diagram',x0,cv.height-16);ctx.textAlign='right';ctx.fillText('Jumlah titik: '+pts.length,x0+w,52);
+} 
+
+function updateCrossPositionLabel(){
+  const type=document.getElementById('crossType')?.value||'h';
+  const lab=document.getElementById('crossPosLabel');
+  const inp=document.getElementById('crossPos');
+  if(!lab||!inp)return;
+  if(type==='h'){
+    lab.textContent='Posisi garis horizontal: Y = ... m';
+    if(model){inp.min='0';inp.max=String(model.H);}
+  }else{
+    lab.textContent='Posisi garis vertikal: X = ... m';
+    if(model){inp.min='0';inp.max=String(model.W);}
+  }
+}
+
+function drawCrossSection(ctx,cv){
+  if(!model)return;
+  updateCrossPositionLabel();
+  const m=model,type=document.getElementById('crossType').value,key=document.getElementById('crossResult').value;
+  let pos=val('crossPos');
+
+  const labels={
+    uy:'Displacement Uy',
+    sy:'Tambahan Tegangan Pondasi Δσy',
+    stotal:'Tegangan Total Vertikal σy',
+    seff:"Tegangan Efektif σ'y",
+    pore:'Total Pore Pressure u',
+    du:'Excess Pore Pressure Δu'
+  };
+  const unit=key==='uy'?'mm':'kPa';
+
+  if(type==='h') pos=Math.max(0,Math.min(m.H,pos));
+  else pos=Math.max(0,Math.min(m.W,pos));
+
+  function valueOf(e){
+    const tri=m.elems[e],ed=m.elemData[e];
+    if(key==='uy') return (m.nodes[tri[0]].uy+m.nodes[tri[1]].uy+m.nodes[tri[2]].uy)/3*1000;
+    return elemValue(ed,key);
+  }
+
+  function cutSegment(e){
+    const tri=m.elems[e];
+    const pts=tri.map(id=>({x:m.nodes[id].x,y:m.nodes[id].y}));
+    const ints=[];
+    for(let k=0;k<3;k++){
+      const a=pts[k],b=pts[(k+1)%3];
+      if(type==='h'){
+        const da=a.y-pos,db=b.y-pos;
+        if(Math.abs(da)<1e-12 && Math.abs(db)<1e-12){
+          ints.push({x:a.x,y:pos},{x:b.x,y:pos});
+        }else if(da*db<=0 && Math.abs(b.y-a.y)>1e-12){
+          const t=(pos-a.y)/(b.y-a.y);
+          if(t>=-1e-10&&t<=1+1e-10) ints.push({x:a.x+t*(b.x-a.x),y:pos});
+        }
+      }else{
+        const da=a.x-pos,db=b.x-pos;
+        if(Math.abs(da)<1e-12 && Math.abs(db)<1e-12){
+          ints.push({x:pos,y:a.y},{x:pos,y:b.y});
+        }else if(da*db<=0 && Math.abs(b.x-a.x)>1e-12){
+          const t=(pos-a.x)/(b.x-a.x);
+          if(t>=-1e-10&&t<=1+1e-10) ints.push({x:pos,y:a.y+t*(b.y-a.y)});
+        }
+      }
+    }
+    const uniq=[];
+    for(const p of ints){
+      if(!uniq.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<1e-8)) uniq.push(p);
+    }
+    if(uniq.length<2)return null;
+    if(type==='h'){
+      uniq.sort((a,b)=>a.x-b.x);
+      return {a:uniq[0].x,b:uniq[uniq.length-1].x,v:valueOf(e)};
+    }else{
+      uniq.sort((a,b)=>a.y-b.y);
+      return {a:uniq[0].y,b:uniq[uniq.length-1].y,v:valueOf(e)};
+    }
+  }
+
+  const segs=[];
+  for(let e=0;e<m.elems.length;e++){
+    const s=cutSegment(e);
+    if(s&&s.b-s.a>1e-9)segs.push(s);
+  }
+  segs.sort((a,b)=>a.a-b.a);
+  const samples=segs.map(s=>({coord:(s.a+s.b)/2,v:s.v}));
+
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
+
+  if(!samples.length){
+    ctx.fillStyle='#64748b';ctx.font='14px Arial';ctx.textAlign='center';
+    ctx.fillText('Garis cross-section tidak memotong elemen mesh.',cv.width/2,cv.height/2);
+    ctx.textAlign='start';return;
+  }
+
+  const left=108,right=54,top=72,bottom=122;
+  const gx0=left,gx1=cv.width-right,gy0=top,gy1=cv.height-bottom;
+  let vmin=Math.min(...samples.map(p=>p.v)),vmax=Math.max(...samples.map(p=>p.v));
+  if(Math.abs(vmax-vmin)<1e-12){const d=Math.max(1,Math.abs(vmax)*.1);vmin-=d;vmax+=d;}
+  else {const d=.08*(vmax-vmin);vmin-=d;vmax+=d;}
+
+  const mapX=x=>gx0+(x/m.W)*(gx1-gx0);
+  const mapY=y=>gy0+(y/m.H)*(gy1-gy0);
+  const mapValX=v=>gx0+(v-vmin)/(vmax-vmin)*(gx1-gx0);
+  const mapValY=v=>gy1-(v-vmin)/(vmax-vmin)*(gy1-gy0);
+
+  ctx.fillStyle='#17324d';ctx.textAlign='center';ctx.font='bold 16px Arial';
+  ctx.fillText(type==='h'
+    ?'Cross Section Horizontal — Y = '+fmt(pos,2)+' m (arah X)'
+    :'Cross Section Vertikal — X = '+fmt(pos,2)+' m (arah Y)',cv.width/2,26);
+  ctx.font='bold 13px Arial';ctx.fillText(labels[key]+' ('+unit+')',cv.width/2,48);
+
+  ctx.strokeStyle='#334155';ctx.lineWidth=1.2;ctx.strokeRect(gx0,gy0,gx1-gx0,gy1-gy0);
+  ctx.font='10px Arial';ctx.fillStyle='#475569';
+
+  if(type==='h'){
+    for(let i=0;i<=10;i++){
+      const xv=m.W*i/10,px=mapX(xv);
+      ctx.strokeStyle='#e7edf3';ctx.beginPath();ctx.moveTo(px,gy0);ctx.lineTo(px,gy1);ctx.stroke();
+      ctx.strokeStyle='#475569';ctx.beginPath();ctx.moveTo(px,gy1);ctx.lineTo(px,gy1+6);ctx.stroke();
+      ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(fmt(xv,2),px,gy1+9);
+    }
+    for(let j=0;j<=8;j++){
+      const vv=vmin+(vmax-vmin)*j/8,py=mapValY(vv);
+      ctx.strokeStyle='#e7edf3';ctx.beginPath();ctx.moveTo(gx0,py);ctx.lineTo(gx1,py);ctx.stroke();
+      ctx.strokeStyle='#475569';ctx.beginPath();ctx.moveTo(gx0-6,py);ctx.lineTo(gx0,py);ctx.stroke();
+      ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(fmt(vv,2),gx0-9,py);
+    }
+    ctx.fillStyle='#1f2937';ctx.font='bold 12px Arial';ctx.textAlign='center';
+    ctx.fillText('Koordinat X sepanjang garis potong mesh (m)',(gx0+gx1)/2,cv.height-50);
+    ctx.save();ctx.translate(27,(gy0+gy1)/2);ctx.rotate(-Math.PI/2);ctx.fillText(labels[key]+' ('+unit+')',0,0);ctx.restore();
+
+    // Garis penghubung antar titik data hasil cross-section
+    ctx.strokeStyle='#0f78bd';ctx.lineWidth=2;
+    ctx.beginPath();
+    samples.forEach((p,i)=>{
+      const px=mapX(p.coord),py=mapValY(p.v);
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    });
+    ctx.stroke();
+
+    const step=Math.max(1,Math.ceil(samples.length/18));ctx.font='9px Arial';
+    samples.forEach((p,i)=>{
+      const px=mapX(p.coord),py=mapValY(p.v);
+      ctx.fillStyle='#c51616';ctx.beginPath();ctx.arc(px,py,2.8,0,Math.PI*2);ctx.fill();
+      if(i%step===0||i===samples.length-1){
+        const above=(Math.floor(i/step)%2===0);
+        ctx.fillStyle='#24364b';ctx.textAlign=px<gx0+65?'left':(px>gx1-65?'right':'center');
+        ctx.fillText('x='+fmt(p.coord,2)+' m',px,above?py-10:py+16);
+        ctx.fillText(fmt(p.v,2)+' '+unit,px,above?py-21:py+27);
+      }
+    });
+
+    ctx.fillStyle='#64748b';ctx.font='11px Arial';ctx.textAlign='center';
+    ctx.fillText('Garis potong mesh aktual: Y = '+fmt(pos,2)+' m   |   X = 0–'+fmt(m.W,2)+' m   |   elemen terpotong = '+segs.length,cv.width/2,cv.height-18);
+
+  }else{
+    for(let i=0;i<=8;i++){
+      const vv=vmin+(vmax-vmin)*i/8,px=mapValX(vv);
+      ctx.strokeStyle='#e7edf3';ctx.beginPath();ctx.moveTo(px,gy0);ctx.lineTo(px,gy1);ctx.stroke();
+      ctx.strokeStyle='#475569';ctx.beginPath();ctx.moveTo(px,gy1);ctx.lineTo(px,gy1+6);ctx.stroke();
+      ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(fmt(vv,2),px,gy1+9);
+    }
+    for(let j=0;j<=10;j++){
+      const yv=m.H*j/10,py=mapY(yv);
+      ctx.strokeStyle='#e7edf3';ctx.beginPath();ctx.moveTo(gx0,py);ctx.lineTo(gx1,py);ctx.stroke();
+      ctx.strokeStyle='#475569';ctx.beginPath();ctx.moveTo(gx0-6,py);ctx.lineTo(gx0,py);ctx.stroke();
+      ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(fmt(yv,2),gx0-9,py);
+    }
+    ctx.fillStyle='#1f2937';ctx.font='bold 12px Arial';ctx.textAlign='center';
+    ctx.fillText(labels[key]+' ('+unit+')',(gx0+gx1)/2,cv.height-50);
+    ctx.save();ctx.translate(27,(gy0+gy1)/2);ctx.rotate(-Math.PI/2);ctx.fillText('Kedalaman Y sepanjang garis potong mesh (m)',0,0);ctx.restore();
+
+    // Garis penghubung antar titik data hasil cross-section
+    ctx.strokeStyle='#0f78bd';ctx.lineWidth=2;
+    ctx.beginPath();
+    samples.forEach((p,i)=>{
+      const px=mapValX(p.v),py=mapY(p.coord);
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    });
+    ctx.stroke();
+
+    const step=Math.max(1,Math.ceil(samples.length/18));ctx.font='9px Arial';
+    samples.forEach((p,i)=>{
+      const px=mapValX(p.v),py=mapY(p.coord);
+      ctx.fillStyle='#c51616';ctx.beginPath();ctx.arc(px,py,2.8,0,Math.PI*2);ctx.fill();
+      if(i%step===0||i===samples.length-1){
+        const right=(Math.floor(i/step)%2===0),dx=right?7:-7;
+        ctx.fillStyle='#24364b';ctx.textAlign=right?'left':'right';
+        ctx.fillText('y='+fmt(p.coord,2)+' m',px+dx,py-4);
+        ctx.fillText(fmt(p.v,2)+' '+unit,px+dx,py+8);
+      }
+    });
+
+    ctx.fillStyle='#64748b';ctx.font='11px Arial';ctx.textAlign='center';
+    ctx.fillText('Garis potong mesh aktual: X = '+fmt(pos,2)+' m   |   Y = 0–'+fmt(m.H,2)+' m   |   elemen terpotong = '+segs.length,cv.width/2,cv.height-18);
+  }
+
+  ctx.textAlign='start';ctx.textBaseline='alphabetic';
+}
+
+
+function drawLoadSettlement(ctx,cv){
+  const m=model;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
+  if(!m||!m.loadSettlement||!m.loadSettlement.length){
+    ctx.fillStyle='#64748b';ctx.font='15px Arial';ctx.fillText('Belum ada data Load–Settlement.',70,80);return;
+  }
+  const pts=m.loadSettlement;
+  const padL=100,padR=55,padT=70,padB=95;
+  const x0=padL,x1=cv.width-padR,y0=cv.height-padB,y1=padT;
+  const maxS=Math.max(...pts.map(p=>Math.abs(p.settlement)),1);
+  const maxP=Math.max(...pts.map(p=>p.load),1);
+  const X=s=>x0+(Math.abs(s)/maxS)*(x1-x0);
+  const Y=p=>y0-(p/maxP)*(y0-y1);
+
+  ctx.fillStyle='#17324d';ctx.font='bold 17px Arial';ctx.textAlign='center';
+  ctx.fillText('Kurva Load–Settlement'+(m.materialModel==='mc'?' — Mohr–Coulomb Perfect Plasticity':' — Linear Elastic'),cv.width/2,28);
+  ctx.font='12px Arial';ctx.fillStyle='#64748b';
+  ctx.fillText(m.materialModel==='mc'?`c′=${fmt(m.cohesion,1)} kPa, φ′=${fmt(m.phiDeg,1)}°, ψ=${fmt(m.psiDeg,1)}°`:'Respons linear elastic',cv.width/2,48);
+
+  ctx.strokeStyle='#334155';ctx.lineWidth=1.2;ctx.strokeRect(x0,y1,x1-x0,y0-y1);
+  ctx.font='10px Arial';ctx.fillStyle='#475569';
+  for(let i=0;i<=8;i++){
+    const s=maxS*i/8,px=X(s);ctx.strokeStyle='#e7edf3';ctx.beginPath();ctx.moveTo(px,y1);ctx.lineTo(px,y0);ctx.stroke();
+    ctx.fillStyle='#475569';ctx.textAlign='center';ctx.fillText(fmt(s,2),px,y0+18);
+  }
+  for(let j=0;j<=8;j++){
+    const p=maxP*j/8,py=Y(p);ctx.strokeStyle='#e7edf3';ctx.beginPath();ctx.moveTo(x0,py);ctx.lineTo(x1,py);ctx.stroke();
+    ctx.fillStyle='#475569';ctx.textAlign='right';ctx.fillText(fmt(p,1),x0-8,py+3);
+  }
+  ctx.fillStyle='#1f2937';ctx.font='bold 12px Arial';ctx.textAlign='center';
+  ctx.fillText('Settlement rata-rata pondasi, s (mm)',(x0+x1)/2,cv.height-35);
+  ctx.save();ctx.translate(28,(y0+y1)/2);ctx.rotate(-Math.PI/2);ctx.fillText('Beban total 2D, P (kN/m)',0,0);ctx.restore();
+
+  ctx.strokeStyle='#0f78bd';ctx.lineWidth=2.5;ctx.beginPath();
+  pts.forEach((p,i)=>{const px=X(p.settlement),py=Y(p.load);if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});ctx.stroke();
+
+  pts.forEach((p,i)=>{
+    const px=X(p.settlement),py=Y(p.load);
+    ctx.fillStyle=p.plastic>0?'#c51616':'#0f78bd';ctx.beginPath();ctx.arc(px,py,3.3,0,Math.PI*2);ctx.fill();
+    if(i===pts.length-1 || i%Math.max(1,Math.ceil(pts.length/10))===0){
+      ctx.font='9px Arial';ctx.fillStyle='#24364b';ctx.textAlign='left';
+      ctx.fillText(`${fmt(Math.abs(p.settlement),2)} mm`,px+5,py-5);
+    }
+  });
+  ctx.fillStyle='#64748b';ctx.font='11px Arial';ctx.textAlign='center';
+  const last=pts[pts.length-1];
+  ctx.fillText(`Step ${last.step}/${m.loadSteps||1} | elemen plastis ${last.plastic||0} | iterasi step terakhir ${last.iterations||0}`,cv.width/2,cv.height-12);
+}
+
+function drawEmpty(ctx,cv){ctx.fillStyle='#f8fbff';ctx.fillRect(0,0,cv.width,cv.height);ctx.fillStyle='#5b6b7d';ctx.font='16px Arial';ctx.fillText('Atur geometri dan mesh, lalu klik Generate Mesh.',60,80)}
+function downloadCSV(){ if(!lastCSV){alert('Hitung FEM dulu.'); return;} const blob=new Blob([lastCSV],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='hasil_node_fem_pondasi.csv'; a.click(); URL.revokeObjectURL(a.href); }
+window.onload=()=>{
+  toggleMaterialModel();toggleLoadInput();toggleWaterInput();toggleDrainInput();updateMeshInfo();
+  ['W','H','B','x0'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e)e.addEventListener('change',markMeshDirty);
+  });
+  const rf=document.getElementById('refineFooting');
+  if(rf)rf.addEventListener('change',markMeshDirty);
+  meshReady=false;meshDirty=true;generatedMesh=null;model=null;
+  updateWorkflowStatus();draw();
+};
+</script>
+
+<footer style="margin:24px auto 12px;max-width:1400px;padding:14px 18px;text-align:center;border-top:1px solid #dbe4ee;color:#64748b;font-size:12px;line-height:1.6">
+  <b style="color:#334155">Program dibuat oleh Mohamad Khoiri dengan bantuan AI.<br>Email: <a href="mailto:mkhoiri@its.ac.id" style="color:inherit">mkhoiri@its.ac.id</a></b>
+</footer>
+
+</body>
+</html>
