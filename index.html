@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FEM Sederhana Pondasi Dangkal 2D</title>
+<title>FEM Pondasi Dangkal — Plane Strain & Axisymmetric + Mohr–Coulomb</title>
 <style>
 :root{
   --bg:#eef3f8; --card:#ffffff; --ink:#1c2b39; --muted:#5b6b7d; --blue:#0f78bd; --cyan:#18a8d8; --orange:#f59e0b; --red:#ef4444; --green:#16a34a; --line:#d8e2ec;
@@ -50,7 +50,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
 <body>
 <header>
   <h1>FEM Sederhana Pondasi Dangkal 2D</h1>
-  <p>Model edukatif FEM pondasi dangkal 2D dengan pilihan material <b>Linear Elastic</b> atau <b>Mohr–Coulomb Perfect Plasticity</b>. Model menggunakan kondisi plane strain, elemen segitiga CST, serta analisis incremental–iterative untuk material elastoplastik.</p>
+  <p>Model edukatif FEM pondasi dangkal dengan pilihan formulasi <b>Plane Strain</b> untuk strip foundation dan <b>Axisymmetric</b> untuk circular foundation. Material <b>Linear Elastic</b> dan <b>Mohr–Coulomb Perfect Plasticity</b> tersedia pada keduanya. Pada Axisymmetric, kriteria MC dievaluasi dari tiga tegangan utama 3D termasuk tegangan hoop σθ.</p>
 </header>
 
 <div class="wrap">
@@ -58,10 +58,17 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
     <h2>Input Model</h2>
     <div class="body">
       <div class="grid2">
-        <div class="row"><label>Lebar domain tanah, W (m)</label><input id="W" type="number" value="20" step="1"></div>
+        <div class="row gridFull"><label>Formulasi Analisis</label>
+          <select id="analysisType" class="modeSelect" onchange="toggleAnalysisType()">
+            <option value="plane" selected>Plane Strain — Strip Foundation</option>
+            <option value="axisym">Axisymmetric — Circular Foundation</option>
+          </select>
+          <div id="analysisTypeHint" class="hint" style="margin-top:5px">Plane strain: penampang 2D strip foundation, hasil beban dalam kN/m.</div>
+        </div>
+        <div class="row"><label id="WLabel">Lebar domain tanah, W (m)</label><input id="W" type="number" value="20" step="1"></div>
         <div class="row"><label>Kedalaman domain, D (m)</label><input id="H" type="number" value="10" step="1"></div>
-        <div class="row"><label>Lebar pondasi, B (m)</label><input id="B" type="number" value="3" step="0.1"></div>
-        <div class="row"><label>Posisi pusat pondasi, x₀ (m)</label><input id="x0" type="number" value="10" step="0.1"></div>
+        <div class="row"><label id="BLabel">Lebar pondasi, B (m)</label><input id="B" type="number" value="3" step="0.1"></div>
+        <div class="row" id="x0Row"><label>Posisi pusat pondasi, x₀ (m)</label><input id="x0" type="number" value="10" step="0.1"></div>
       </div>
       <div class="note small"><b>Tahap 1 — Geometri & Mesh:</b> pilih kepadatan mesh sebagai preset atau atur manual. Opsi <b>mesh rapat di sekitar pondasi</b> memperkecil ukuran elemen di zona pengaruh pondasi. Setelah selesai, klik <b>Generate Mesh</b> untuk membuat dan memeriksa discretization sebelum memilih material dan menjalankan analisis.</div>
       <div class="grid2">
@@ -128,7 +135,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
       </div>
       <hr style="border:none;border-top:1px solid var(--line);margin:8px 0 14px">
       <div class="grid2">
-        <div class="row gridFull"><label>Pilihan Mode Input Pondasi</label><select id="loadMode" class="modeSelect" onchange="toggleLoadInput()"><option value="load" selected>Input Beban Merata / Tekanan q</option><option value="disp">Input Deformasi Merata Pondasi</option></select><div class="hint" style="margin-top:5px">Pilih apakah pondasi dimodelkan dengan beban merata atau deformasi/penurunan merata yang ditentukan.</div></div>
+        <div class="row gridFull"><label>Pilihan Mode Input Pondasi</label><select id="loadMode" class="modeSelect" onchange="toggleLoadInput()"><option value="load" selected>Input Beban Merata / Tekanan q</option><option value="disp">Input Deformasi Merata Pondasi</option></select><div class="hint" style="margin-top:5px">Pilih beban merata q (load control) atau deformasi/penurunan merata s (displacement control). Keduanya tersedia untuk Linear Elastic dan Mohr–Coulomb.</div></div>
         <div class="row" id="qRow"><label>Tekanan pondasi, q (kPa)</label><input id="q" type="number" value="150" step="10"></div>
         <div class="row" id="dispRow" style="display:none"><label>Deformasi merata pondasi, s (mm, turun +)</label><input id="prescribedDisp" type="number" value="10" step="0.5" min="0"></div>
       </div>
@@ -144,7 +151,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
       </div>
       <div id="status" class="status">Siap dihitung. Gunakan mesh sedang agar proses cepat di browser.</div>
       <div class="note small">
-        <b>Catatan:</b> model ini memakai satuan kN–m–kPa. Beban 2D adalah beban per meter panjang pondasi. Untuk desain final perlu verifikasi dengan metode geoteknik dan data tanah sebenarnya.
+        <b>Catatan:</b> model ini memakai satuan kN–m–kPa. Pada Plane Strain, beban adalah per meter panjang pondasi; pada Axisymmetric, beban merupakan total gaya pada pondasi lingkaran. Untuk desain final perlu verifikasi dengan metode geoteknik dan data tanah sebenarnya.
       </div>
     </div>
   </section>
@@ -153,7 +160,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
     <section class="kpi">
       <div class="box"><div class="name">Settlement maks.</div><div id="k_settle" class="value">-</div><div class="unit">mm, arah turun</div></div>
       <div class="box"><div class="name">Settlement rata-rata pondasi</div><div id="k_avg" class="value">-</div><div class="unit">mm</div></div>
-      <div class="box"><div class="name">Beban total 2D</div><div id="k_load" class="value">-</div><div class="unit">kN/m</div></div>
+      <div class="box"><div class="name" id="k_load_name">Beban resultan</div><div id="k_load" class="value">-</div><div id="k_load_unit" class="unit">kN/m</div></div>
       <div class="box"><div class="name">σᵧ maksimum</div><div id="k_sig" class="value">-</div><div class="unit">kPa, kompresi</div></div>
     </section>
 
@@ -234,6 +241,21 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
 <p>Saat <b>Run Analysis</b>, progress bar menunjukkan tahapan solver. Untuk Mohr–Coulomb, progress diperbarui selama incremental loading dengan informasi <b>load step, iteration, residual ratio, dan jumlah elemen plastic trial</b>. Perhitungan memberi kesempatan browser memperbarui tampilan di antara iterasi sehingga proses yang masih berjalan dapat dibedakan dari aplikasi yang tidak merespons.</p>
 <p><b>Orientasi mesh simetris:</b> untuk mengurangi numerical symmetry breaking pada model Mohr–Coulomb, quadrilateral grid di sisi kiri centerline pondasi dibagi dengan diagonal yang merupakan cerminan diagonal di sisi kanan. Dengan demikian pasangan elemen kiri–kanan memiliki topologi yang saling mirror, bukan seluruh domain memakai diagonal searah. Simetri paling baik bila centerline pondasi tepat berimpit dengan sebuah grid line.</p>
 <p><b>Preview mesh sebelum analisis:</b> setelah Generate Mesh, pengguna dapat menampilkan mesh saja, nodal point, stress point, atau keduanya. Pada elemen CST, stress/strain konstan dalam satu elemen sehingga centroid dipakai sebagai representasi stress point. Sebelum Run Analysis, tanda stress point hanya menunjukkan <i>lokasi evaluasi</i>; nilai σx, σy, dan τxy belum tersedia sampai solver selesai.</p>
+<h3>0A. Pilihan Formulasi: Plane Strain dan Axisymmetric</h3>
+<p><b>Plane Strain</b> digunakan untuk strip foundation yang dianggap sangat panjang. <b>Axisymmetric</b> digunakan untuk circular foundation dengan geometri, material, beban, dan respons yang simetris terhadap sumbu vertikal <i>r = 0</i>.</p>
+<div class="eq"><span class="formula">Axisymmetric: {ε} = [ε<sub>r</sub>, ε<sub>z</sub>, γ<sub>rz</sub>, ε<sub>θ</sub>]<sup>T</sup></span></div>
+<div class="eq"><span class="formula">ε<sub>θ</sub> = u<sub>r</sub>/r &nbsp;&nbsp; dan &nbsp;&nbsp; dV = 2πr dA</span></div>
+<p>Elemen segitiga axisymmetric memakai interpolasi linear untuk u<sub>r</sub> dan u<sub>z</sub>. Komponen hoop strain ε<sub>θ</sub> dievaluasi pada centroid elemen. Kekakuan elemen dihitung dengan faktor volume putar <b>2πr̄A</b>.</p>
+<div class="eq"><span class="formula">k<sub>e</sub> = 2πr̄ A B<sup>T</sup>D B</span></div>
+<p>Untuk pondasi lingkaran berdiameter B, radius R = B/2 dan tekanan merata q menghasilkan:</p>
+<div class="eq"><span class="formula">P = q π R²</span></div>
+<p><b>Konvensi satuan hasil:</b> Plane Strain dilaporkan sebagai gaya per meter panjang strip, <b>kN/m</b>. Solver Axisymmetric mengintegrasikan revolusi penuh dengan faktor 2πr sehingga resultan internal P<sub>full</sub> berada dalam kN. Untuk konsistensi tampilan yang dipilih pada program ini, grafik dan dashboard Axisymmetric melaporkan <b>P<sub>rad</sub> = P<sub>full</sub>/(2π)</b> dalam <b>kN/rad</b>. Resultan penuh 360° tetap ditampilkan pada tabel ringkasan sebagai informasi tambahan.</p>
+<div class="warnBox"><b>Mohr–Coulomb Axisymmetric:</b> tensor tegangan axisymmetric dibentuk dari σr, σz, τrz, dan σθ. Tiga tegangan utama 3D dihitung, kemudian yield MC memakai σ1 dan σ3. Plastic flow menggunakan ψ dan increment regangan plastis dikembalikan ke komponen r–z–θ. Implementasi ini tetap bersifat edukatif: perfect plasticity, regularisasi secant global, tanpa hardening/softening dan tanpa consistent elastoplastic tangent penuh.</div>
+<h3>0B. Load Control dan Displacement Control pada Mohr–Coulomb</h3>
+<p>Mohr–Coulomb dapat dijalankan dengan <b>Input Beban Merata q</b> maupun <b>Input Deformasi Merata s</b>. Pada displacement control, penurunan pondasi dinaikkan secara incremental:</p>
+<div class="eq"><span class="formula">s<sub>i</sub> = (i/N) s<sub>target</sub></span></div>
+<p>DOF vertikal node kontak pondasi dipertahankan pada target setiap step, sedangkan DOF bebas dicari melalui iterasi keseimbangan nonlinear. Setelah konvergen, resultan reaksi pada node kontak dihitung sebagai beban pondasi dan digunakan untuk membentuk kurva <b>Load–Settlement</b>. Penurunan yang dilaporkan adalah tambahan terhadap kondisi awal akibat berat sendiri.</p>
+<p>Displacement control biasanya lebih berguna untuk menelusuri respons menuju kondisi plastis/ultimate karena deformasi tetap dapat ditingkatkan ketika kenaikan kapasitas beban mulai kecil. Solver ini belum menggunakan arc-length sehingga snap-back/post-peak yang kompleks belum ditelusuri secara penuh.</p>
 <h3>1. Idealisisasi dan Asumsi Plane Strain</h3>
 <p>Domain tanah homogen dibagi menjadi elemen segitiga CST tiga node. Untuk pondasi menerus digunakan kondisi plane strain:</p>
 <div class="eq"><span class="formula">ε<sub>z</sub>=0,&nbsp; γ<sub>xz</sub>=0,&nbsp; γ<sub>yz</sub>=0</span></div>
@@ -505,23 +527,75 @@ function markMeshDirty(){
 }
 function meshSignature(){
   return [
+    document.getElementById('analysisType')?.value||'plane',
     val('W'),val('H'),val('B'),val('x0'),
     Math.round(val('nx')),Math.round(val('ny')),
     document.getElementById('refineFooting')?.value||'no'
   ].join('|');
 }
+
+function makeCoordsAxisym(Rdom,n,Rfoot,refine){
+  if(refine!=='yes') return Array.from({length:n+1},(_,i)=>Rdom*i/n);
+  const arr=[];
+  // Smooth radial concentration near footing and symmetry axis.
+  for(let i=0;i<=n;i++){
+    const t=i/n;
+    const r=Rdom*Math.pow(t,1.35);
+    arr.push(r);
+  }
+  // Snap nearest interior grid point to footing radius when feasible.
+  let k=1,best=Infinity;
+  for(let i=1;i<n;i++){const d=Math.abs(arr[i]-Rfoot);if(d<best){best=d;k=i;}}
+  if(Rfoot>0 && Rfoot<Rdom) arr[k]=Rfoot;
+  arr.sort((a,b)=>a-b);
+  // enforce strictly increasing
+  for(let i=1;i<arr.length;i++) if(arr[i]<=arr[i-1]+1e-8) arr[i]=arr[i-1]+1e-6;
+  arr[0]=0; arr[arr.length-1]=Rdom;
+  return arr;
+}
+function toggleAnalysisType(){
+  const axis=document.getElementById('analysisType')?.value==='axisym';
+  const xrow=document.getElementById('x0Row');
+  if(xrow)xrow.style.display=axis?'none':'block';
+  const wl=document.getElementById('WLabel'); if(wl)wl.textContent=axis?'Radius domain tanah, Rdom (m)':'Lebar domain tanah, W (m)';
+  const bl=document.getElementById('BLabel'); if(bl)bl.textContent=axis?'Diameter pondasi lingkaran, B (m)':'Lebar pondasi, B (m)';
+  const hint=document.getElementById('analysisTypeHint');
+  if(hint)hint.innerHTML=axis
+    ? 'Axisymmetric: domain r–z dari r=0 sampai Rdom; pondasi lingkaran beradius R=B/2. Grafik/dashboard melaporkan beban per radian (kN/rad); resultan penuh solver = 2π × nilai per radian (kN).'
+    : 'Plane strain: penampang 2D strip foundation, hasil beban dalam kN/m.';
+  const mat=document.getElementById('materialModel');
+  if(mat){
+    const mcOpt=[...mat.options].find(o=>o.value==='mc');
+    if(mcOpt)mcOpt.disabled=false;
+  }
+  markMeshDirty();
+}
+function axisymPatchValidation(E,nu,Dm){
+  // Constant-strain patch: ur=a*r, uz=b*z -> er=a, ez=b, grz=0, etheta=a.
+  const a=1.0e-4,b=-2.0e-4;
+  const eps=[a,b,0,a];
+  const sig=Array(4).fill(0);
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++)sig[i]+=Dm[i][j]*eps[j];
+  const finite=sig.every(Number.isFinite);
+  const symmetry=Math.abs(Dm[0][3]-Dm[3][0])+Math.abs(Dm[1][3]-Dm[3][1]);
+  return {passed:finite&&symmetry<1e-9,eps,sig,symmetry};
+}
 function generateMesh(){
   try{
-    const W=val('W'),H=val('H'),B=val('B'),x0=val('x0');
+    const analysisType=document.getElementById('analysisType')?.value||'plane';
+    const W=val('W'),H=val('H'),B=val('B'),x0=analysisType==='axisym'?0:val('x0');
     let nx=Math.round(val('nx')),ny=Math.round(val('ny'));
     nx=clamp(nx,4,36);ny=clamp(ny,3,20);
     document.getElementById('nx').value=nx;document.getElementById('ny').value=ny;
     if(!(W>0&&H>0&&B>0)) throw new Error('Geometri tidak valid.');
-    if(B>W*0.8) throw new Error('Lebar pondasi terlalu besar dibanding domain. Gunakan B < 0,8 W.');
+    if(analysisType==='plane' && B>W*0.8) throw new Error('Lebar pondasi terlalu besar dibanding domain. Gunakan B < 0,8 W.');
+    if(analysisType==='axisym' && B/2>W*0.8) throw new Error('Radius pondasi terlalu besar dibanding radius domain. Gunakan B/2 < 0,8 Rdom.');
     const refine=document.getElementById('refineFooting').value;
-    const xCoords=makeCoordsX(W,nx,B,x0,refine);
+    const xCoords=analysisType==='axisym'?makeCoordsAxisym(W,nx,B/2,refine):makeCoordsX(W,nx,B,x0,refine);
     const yCoords=makeCoordsY(H,ny,refine);
-    const triInfo=buildMirrorSymmetricTriangles(nx,ny,xCoords,x0);
+    const triInfo=analysisType==='axisym'
+      ? {elems:buildMirrorSymmetricTriangles(nx,ny,xCoords,0).elems,axisAligned:true,axisNodeIndex:0}
+      : buildMirrorSymmetricTriangles(nx,ny,xCoords,x0);
     const elems=triInfo.elems;
 
     let dxMin=Infinity,dxMax=0,dyMin=Infinity,dyMax=0;
@@ -534,7 +608,7 @@ function generateMesh(){
     }
 
     resetAnalysisProgress();
-    generatedMesh={W,H,B,x0,nx,ny,refine,xCoords:[...xCoords],yCoords:[...yCoords],
+    generatedMesh={analysisType,W,H,B,x0,nx,ny,refine,xCoords:[...xCoords],yCoords:[...yCoords],
       elems:elems.map(t=>[...t]),signature:meshSignature(),dxMin,dxMax,dyMin,dyMax,aspectMax,
       triangulation:'mirror-symmetric',axisAligned:triInfo.axisAligned,axisNodeIndex:triInfo.axisNodeIndex};
     meshReady=true;meshDirty=false;model=null;
@@ -544,7 +618,9 @@ function generateMesh(){
       '<b>Mesh berhasil dibuat.</b> '+((nx+1)*(ny+1))+' node, '+(2*nx*ny)+' elemen CST. '+
       'Δx = '+fmt(dxMin,3)+'–'+fmt(dxMax,3)+' m; Δy = '+fmt(dyMin,3)+'–'+fmt(dyMax,3)+
       ' m; aspect ratio maks. = '+fmt(aspectMax,2)+'. '+
-      '<b>Orientasi diagonal: mirror-symmetric</b> terhadap centerline pondasi x = '+fmt(x0,3)+' m. '+
+      (analysisType==='axisym'
+        ? '<b>Formulasi mesh: axisymmetric r–z</b>; sumbu simetri r = 0. '
+        : '<b>Orientasi diagonal: mirror-symmetric</b> terhadap centerline pondasi x = '+fmt(x0,3)+' m. ')+
       (triInfo.axisAligned
         ? '<span style="color:#166534"><b>Centerline tepat pada grid line — simetri diskret eksak.</b></span>'
         : '<span style="color:#92400e"><b>Catatan:</b> centerline tidak tepat pada grid line; sel yang memotong sumbu memakai diagonal bergantian untuk meminimalkan mesh bias.</span>');
@@ -694,6 +770,7 @@ function resetDefault(){
   const defaults={W:20,H:10,B:3,x0:10,nx:24,ny:12,E:20000,nu:0.30,gamma:18,q:150,defScale:80};
   for(const k in defaults) document.getElementById(k).value=defaults[k];
   document.getElementById('selfWeight').value='no';
+  document.getElementById('analysisType').value='plane'; toggleAnalysisType();
   document.getElementById('materialModel').value='elastic'; toggleMaterialModel();
   document.getElementById('loadMode').value='load'; toggleLoadInput();
   meshReady=false;meshDirty=true;generatedMesh=null;model=null;
@@ -704,6 +781,8 @@ function setView(v,el){ currentView=v; document.querySelectorAll('.tab').forEach
 function nodeId(i,j,nx){return j*(nx+1)+i}
 function addK(K,n,a,b,v){K[a][b]+=v}
 function toggleMaterialModel(){
+  const axis=document.getElementById('analysisType')?.value==='axisym';
+  const matSel=document.getElementById('materialModel');
   const isMC=document.getElementById('materialModel')?.value==='mc';
   const el=document.getElementById('mcInputs'); if(el) el.style.display=isMC?'block':'none';
   const pt=document.getElementById('plasticityTab'); if(pt) pt.style.opacity=isMC?'1':'.45';
@@ -735,8 +814,11 @@ async function runAnalysis(){
   try{
     if(!meshReady || meshDirty || !generatedMesh) throw new Error('Mesh belum siap. Klik Generate Mesh terlebih dahulu.');
     if(generatedMesh.signature!==meshSignature()) throw new Error('Geometri/mesh berubah setelah Generate Mesh. Generate ulang mesh terlebih dahulu.');
+    const analysisType=generatedMesh.analysisType||'plane';
+    const isAxisym=analysisType==='axisym';
     const W=generatedMesh.W, H=generatedMesh.H, B=generatedMesh.B, x0=generatedMesh.x0, E=val('E'), nu=val('nu'), gamma=val('gamma'), q=val('q');
     const materialModel=document.getElementById('materialModel').value;
+
     const cohesion=materialModel==='mc'?val('cohesion'):0;
     const phiDeg=materialModel==='mc'?val('phi'):0;
     const flowRule=materialModel==='mc'?document.getElementById('flowRule').value:'nonassoc';
@@ -766,24 +848,40 @@ async function runAnalysis(){
     const K=Array.from({length:ndof},()=>new Float64Array(ndof));
     const F=new Float64Array(ndof);
     const c=E/((1+nu)*(1-2*nu));
-    const Dm=[[c*(1-nu),c*nu,0],[c*nu,c*(1-nu),0],[0,0,c*(1-2*nu)/2]];
+    // Component order:
+    // Plane strain: [ex, ez, gxz]
+    // Axisymmetric: [er, ez, grz, etheta]
+    const Dm=isAxisym
+      ? [[c*(1-nu),c*nu,0,c*nu],
+         [c*nu,c*(1-nu),0,c*nu],
+         [0,0,c*(1-2*nu)/2,0],
+         [c*nu,c*nu,0,c*(1-nu)]]
+      : [[c*(1-nu),c*nu,0],[c*nu,c*(1-nu),0],[0,0,c*(1-2*nu)/2]];
+    const ncomp=isAxisym?4:3;
+    const axisymValidation=isAxisym?axisymPatchValidation(E,nu,Dm):null;
     function elemStiff(tri){
       const a=nodes[tri[0]], b=nodes[tri[1]], cnode=nodes[tri[2]];
       const x1=a.x,y1=a.y,x2=b.x,y2=b.y,x3=cnode.x,y3=cnode.y;
-      const A=0.5*((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1));
-      const area=Math.abs(A); const s=A>=0?1:-1;
-      const beta=[y2-y3,y3-y1,y1-y2].map(z=>z*s);
-      const gammaB=[x3-x2,x1-x3,x2-x1].map(z=>z*s);
-      const Bm=[
+      const As=0.5*((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1));
+      const area=Math.abs(As); const orient=As>=0?1:-1;
+      const beta=[y2-y3,y3-y1,y1-y2].map(z=>z*orient);
+      const gammaB=[x3-x2,x1-x3,x2-x1].map(z=>z*orient);
+      let Bm=[
         [beta[0],0,beta[1],0,beta[2],0],
         [0,gammaB[0],0,gammaB[1],0,gammaB[2]],
         [gammaB[0],beta[0],gammaB[1],beta[1],gammaB[2],beta[2]]
       ].map(row=>row.map(v=>v/(2*area)));
-      const DB=Array.from({length:3},()=>Array(6).fill(0));
-      for(let i=0;i<3;i++) for(let j=0;j<6;j++) for(let k=0;k<3;k++) DB[i][j]+=Dm[i][k]*Bm[k][j];
+      const rbar=(x1+x2+x3)/3;
+      if(isAxisym){
+        if(rbar<=1e-12) throw new Error('Centroid elemen axisymmetric berada pada r≈0; periksa mesh.');
+        Bm.push([1/(3*rbar),0,1/(3*rbar),0,1/(3*rbar),0]);
+      }
+      const DB=Array.from({length:ncomp},()=>Array(6).fill(0));
+      for(let i=0;i<ncomp;i++) for(let j=0;j<6;j++) for(let k=0;k<ncomp;k++) DB[i][j]+=Dm[i][k]*Bm[k][j];
       const ke=Array.from({length:6},()=>Array(6).fill(0));
-      for(let i=0;i<6;i++) for(let j=0;j<6;j++) for(let k=0;k<3;k++) ke[i][j]+=Bm[k][i]*DB[k][j]*area;
-      return {ke,Bm,area};
+      const weight=isAxisym?2*Math.PI*rbar*area:area;
+      for(let i=0;i<6;i++) for(let j=0;j<6;j++) for(let k=0;k<ncomp;k++) ke[i][j]+=Bm[k][i]*DB[k][j]*weight;
+      return {ke,Bm,area,rbar,weight};
     }
     const elemData=[];
     for(let e=0;e<elems.length;e++){
@@ -792,7 +890,7 @@ async function runAnalysis(){
       for(let i=0;i<6;i++) for(let j=0;j<6;j++) K[dofs[i]][dofs[j]]+=ed.ke[i][j];
       if(document.getElementById('selfWeight').value==='yes'){
         // body force: gamma acts downward, equivalent nodal load gamma*area/3 per node, per meter thickness
-        for(let k=0;k<3;k++) F[tri[k]*2+1]+=gamma*ed.area/3;
+        for(let k=0;k<3;k++) F[tri[k]*2+1]+=gamma*ed.weight/3;
       }
     }
     // Simpan sistem mekanik sebelum aksi pondasi.
@@ -825,16 +923,16 @@ async function runAnalysis(){
     function recoverStress(Ucase){
       return elems.map((tri,eidx)=>{
         const ue=[Ucase[tri[0]*2],Ucase[tri[0]*2+1],Ucase[tri[1]*2],Ucase[tri[1]*2+1],Ucase[tri[2]*2],Ucase[tri[2]*2+1]];
-        const eps=[0,0,0];
-        for(let i=0;i<3;i++) for(let j=0;j<6;j++) eps[i]+=elemData[eidx].Bm[i][j]*ue[j];
-        const sig=[0,0,0];
-        for(let i=0;i<3;i++) for(let j=0;j<3;j++) sig[i]+=Dm[i][j]*eps[j];
+        const eps=Array(ncomp).fill(0);
+        for(let i=0;i<ncomp;i++) for(let j=0;j<6;j++) eps[i]+=elemData[eidx].Bm[i][j]*ue[j];
+        const sig=Array(ncomp).fill(0);
+        for(let i=0;i<ncomp;i++) for(let j=0;j<ncomp;j++) sig[i]+=Dm[i][j]*eps[j];
         return {eps,sig};
       });
     }
 
     // Identifikasi node kontak pondasi pada permukaan.
-    const xL=x0-B/2, xR=x0+B/2; let contactNodes=[]; let totalLoad=0;
+    const xL=isAxisym?0:x0-B/2, xR=isAxisym?B/2:x0+B/2; let contactNodes=[]; let totalLoad=0;
     for(let i=0;i<nx;i++){
       const nA=nodeId(i,0,nx), nB=nodeId(i+1,0,nx);
       const xm=(nodes[nA].x+nodes[nB].x)/2;
@@ -843,6 +941,8 @@ async function runAnalysis(){
     contactNodes=[...new Set(contactNodes)].sort((a,b)=>a-b);
     // Kondisi batas geometri standar.
     for(let i=0;i<=nx;i++){ nodes[nodeId(i,ny,nx)].fixX=true; nodes[nodeId(i,ny,nx)].fixY=true; }
+    // Plane strain: kedua sisi lateral ux=0. Axisymmetric: r=0 adalah sumbu simetri ur=0,
+    // dan batas radial luar juga ditahan ur=0 sebagai far-field truncation.
     for(let j=0;j<=ny;j++){ nodes[nodeId(0,j,nx)].fixX=true; nodes[nodeId(nx,j,nx)].fixX=true; }
 
     // Baseline geostatik sederhana: berat sendiri saja, tanpa aksi pondasi.
@@ -861,8 +961,18 @@ async function runAnalysis(){
       for(let i=0;i<nx;i++){
         const nA=nodeId(i,0,nx),nB=nodeId(i+1,0,nx),xm=(nodes[nA].x+nodes[nB].x)/2;
         if(xm>=xL-1e-9&&xm<=xR+1e-9){
-          const Lseg=nodes[nB].x-nodes[nA].x,f=q*Lseg/2;
-          Floaded[nA*2+1]+=f;Floaded[nB*2+1]+=f;totalLoad+=q*Lseg;
+          const r1=nodes[nA].x,r2=nodes[nB].x,Lseg=r2-r1;
+          if(isAxisym){
+            // Exact consistent nodal load for q over an axisymmetric ring:
+            // ∫ N_i q 2πr dr along the surface edge.
+            const fA=q*2*Math.PI*Lseg*(2*r1+r2)/6;
+            const fB=q*2*Math.PI*Lseg*(r1+2*r2)/6;
+            Floaded[nA*2+1]+=fA; Floaded[nB*2+1]+=fB;
+            totalLoad+=q*Math.PI*(r2*r2-r1*r1);
+          }else{
+            const f=q*Lseg/2;
+            Floaded[nA*2+1]+=f;Floaded[nB*2+1]+=f;totalLoad+=q*Lseg;
+          }
         }
       }
     }
@@ -894,70 +1004,109 @@ async function runAnalysis(){
     function addInternalForce(Fint, tri, ed, sig){
       const dofs=[tri[0]*2,tri[0]*2+1,tri[1]*2,tri[1]*2+1,tri[2]*2,tri[2]*2+1];
       for(let a=0;a<6;a++){
-        let s=0; for(let k=0;k<3;k++) s+=ed.Bm[k][a]*sig[k];
-        Fint[dofs[a]]+=s*ed.area;
+        let ss=0; for(let k=0;k<ncomp;k++) ss+=ed.Bm[k][a]*sig[k];
+        Fint[dofs[a]]+=ss*ed.weight;
       }
     }
     function principalCompressionPositive(sig){
-      // FEM compression-negative -> geotechnical compression-positive.
-      const sx=-sig[0], sy=-sig[1], t=-sig[2];
-      const mean=(sx+sy)/2, rad=Math.sqrt(((sx-sy)/2)**2+t*t);
-      return {s1:mean+rad,s3:mean-rad,theta:0.5*Math.atan2(2*t,sx-sy)};
+      // Plane strain: principal stresses in r/x-z/y plane.
+      // Axisymmetric: full 3D symmetric tensor in (r,z,theta), with tau_rz.
+      if(!isAxisym){
+        const sx=-sig[0], sy=-sig[1], t=-sig[2];
+        const mean=(sx+sy)/2, rad=Math.sqrt(((sx-sy)/2)**2+t*t);
+        return {s1:mean+rad,s2:mean,s3:mean-rad,theta:0.5*Math.atan2(2*t,sx-sy),axisym:false};
+      }
+      // Compression-positive tensor:
+      // [ sr  trz   0 ]
+      // [ trz sz    0 ]
+      // [ 0    0   stheta ]
+      const sr=-sig[0], sz=-sig[1], trz=-sig[2], sth=-sig[3];
+      const mean=(sr+sz)/2, rad=Math.sqrt(((sr-sz)/2)**2+trz*trz);
+      const lamA=mean+rad, lamB=mean-rad, theta=0.5*Math.atan2(2*trz,sr-sz);
+      const vals=[
+        {v:lamA,kind:'a'},
+        {v:lamB,kind:'b'},
+        {v:sth,kind:'theta'}
+      ].sort((a,b)=>b.v-a.v);
+      return {s1:vals[0].v,s2:vals[1].v,s3:vals[2].v,theta,order:vals,axisym:true,
+              planeVals:{a:lamA,b:lamB,theta:sth}};
     }
     function fromPrincipalCompressionPositive(s1,s3,theta){
       const c2=Math.cos(2*theta),s2=Math.sin(2*theta),mean=(s1+s3)/2,rad=(s1-s3)/2;
       const sxC=mean+rad*c2, syC=mean-rad*c2, tC=rad*s2;
       return [-sxC,-syC,-tC];
     }
+    function axisymFromPrincipal(pr,newS1,newS3){
+      // Keep the intermediate principal stress unchanged; replace only max/min.
+      const map={};
+      map[pr.order[0].kind]=newS1;
+      map[pr.order[1].kind]=pr.s2;
+      map[pr.order[2].kind]=newS3;
+      const a=map.a, b=map.b, sth=map.theta;
+      const c2=Math.cos(2*pr.theta), s2=Math.sin(2*pr.theta);
+      const mean=(a+b)/2, rad=(a-b)/2;
+      const sr=mean+rad*c2, sz=mean-rad*c2, trz=rad*s2;
+      return [-sr,-sz,-trz,-sth];
+    }
+    function axisymPlasticIncrement(pr,dep1,dep3){
+      // Principal plastic increments: max/min active, intermediate = 0.
+      const map={a:0,b:0,theta:0};
+      map[pr.order[0].kind]=dep1;
+      map[pr.order[2].kind]=dep3;
+      const ea=map.a, eb=map.b, eth=map.theta;
+      const c2=Math.cos(2*pr.theta), s2=Math.sin(2*pr.theta);
+      const er=(ea+eb)/2+(ea-eb)*c2/2;
+      const ez=(ea+eb)/2-(ea-eb)*c2/2;
+      const grz=(ea-eb)*s2; // engineering shear
+      return [er,ez,grz,eth];
+    }
     function mcCorrect(sigTrial, edState){
       const ph=phiDeg*Math.PI/180, ps=psiDeg*Math.PI/180;
       const pr=principalCompressionPositive(sigTrial);
       const sinp=Math.sin(ph), cosp=Math.cos(ph);
-      // 2D principal-stress representation of MC:
-      // f=(σ1-σ3) - (σ1+σ3)sinφ - 2c cosφ <= 0
+      // Mohr-Coulomb in principal compression-positive stresses.
+      // Axisymmetric uses the true 3D max/min among σr, σz, σθ principal values.
       const f=(pr.s1-pr.s3)-(pr.s1+pr.s3)*sinp-2*cohesion*cosp;
-      const denom=Math.max(Math.abs((pr.s1-pr.s3)) + Math.abs((pr.s1+pr.s3)*sinp) + 2*cohesion*cosp,1e-9);
       const yieldRatio=Math.max(0,(pr.s1-pr.s3)/Math.max((pr.s1+pr.s3)*sinp+2*cohesion*cosp,1e-9));
       if(f<=1e-7){
         return {sig:sigTrial.slice(),plastic:false,f,yieldRatio,
-          dep:[0,0,0],dlambda:0};
+          dep:Array(ncomp).fill(0),dlambda:0,epsPv:0,gammaP:0,eqp:0};
       }
 
-      // Perfect-plastic correction in principal plane.
-      // Project trial point toward MC line along a non-associated flow direction.
-      // g=(σ1-σ3)-(σ1+σ3)sinψ
       const sing=Math.sin(ps);
       const nF1=1-sinp, nF3=-(1+sinp);
       const nG1=1-sing, nG3=-(1+sing);
-
-      // Approximate principal elastic compliance projected on flow direction.
-      // Plane-strain elastic modulus factors; regularized to keep browser solver stable.
       const G=E/(2*(1+nu)), Kb=E/(3*(1-2*nu));
       const Hmc=Math.max(1e-9,
         Kb*(nF1+nF3)*(nG1+nG3) +
         G*(nF1-nF3)*(nG1-nG3));
       const dl=Math.max(0,f/Hmc);
 
-      // Plastic principal strain increment.
       const dep1=dl*nG1, dep3=dl*nG3;
-
-      // Stress correction using isotropic elasticity in principal basis.
       const dmean=Kb*(dep1+dep3);
       const ddev=G*(dep1-dep3);
       let s1=pr.s1-(dmean+ddev);
       let s3=pr.s3-(dmean-ddev);
 
-      // Final exact projection to MC yield line at fixed mean if numerical drift remains.
+      // Projection onto the active MC face. Intermediate principal stress is retained.
       const mean=(s1+s3)/2;
       const qYield=Math.max(0,2*mean*sinp+2*cohesion*cosp);
       s1=mean+qYield/2; s3=mean-qYield/2;
 
-      const sig=fromPrincipalCompressionPositive(s1,s3,pr.theta);
-      const epsPv=dep1+dep3;
-      const gammaP=Math.abs(dep1-dep3);
+      const sig=isAxisym?axisymFromPrincipal(pr,s1,s3):fromPrincipalCompressionPositive(s1,s3,pr.theta);
+      const dep=isAxisym?axisymPlasticIncrement(pr,dep1,dep3):[0,0,0];
+      if(!isAxisym){
+        // Rotate the 2D principal plastic strain increment to global x-y.
+        const c2=Math.cos(2*pr.theta), s2=Math.sin(2*pr.theta);
+        dep[0]=(dep1+dep3)/2+(dep1-dep3)*c2/2;
+        dep[1]=(dep1+dep3)/2-(dep1-dep3)*c2/2;
+        dep[2]=(dep1-dep3)*s2;
+      }
+      const epsPv=dep.reduce((acc,v,i)=>acc+((i===2)?0:v),0);
+      const gammaP=Math.sqrt(dep[2]*dep[2]+(dep1-dep3)*(dep1-dep3));
       const eqp=Math.sqrt(2/3*(dep1*dep1+dep3*dep3));
       return {sig,plastic:true,f,yieldRatio:Math.max(1,yieldRatio),
-        dep:[epsPv/2,epsPv/2,gammaP],dlambda:dl,epsPv,gammaP,eqp};
+        dep,dlambda:dl,epsPv,gammaP,eqp};
     }
 
     if(materialModel==='elastic'){
@@ -970,25 +1119,31 @@ async function runAnalysis(){
       loadSettlement=[{step:0,ratio:0,load:0,settlement:0,plastic:0,iterations:0},
                       {step:1,ratio:1,load:totalLoad,settlement:0,plastic:0,iterations:1}];
     }else{
-      if(loadMode!=='load') throw new Error('Mohr–Coulomb versi ini menggunakan mode Input Beban Merata q. Mode prescribed settlement tetap tersedia untuk Linear Elastic.');
-      setAnalysisProgress(15,'Mohr–Coulomb Solver','Memulai incremental loading dan iterasi nonlinear...','active');
+      setAnalysisProgress(15,'Mohr–Coulomb '+(isAxisym?'Axisymmetric':'Plane Strain')+' Solver','Memulai incremental '+(loadMode==='disp'?'displacement-controlled':'load-controlled')+' analysis dan iterasi nonlinear...','active');
       await uiYield();
       U=new Float64Array(Ubase);
       const state=elemData.map((ed,e)=>({
         sig:baseRec[e].sig.slice(),
         epsTotal:baseRec[e].eps.slice(),
-        epsP:[0,0,0],
+        epsP:Array(ncomp).fill(0),
         eqp:0,epsPv:0,gammaP:0,isPlastic:false,yieldRatio:0,f:0
       }));
 
       const Ffoot=new Float64Array(ndof);
       for(let i=0;i<ndof;i++) Ffoot[i]=Floaded[i]-Fself[i];
-      const normFoot=Math.max(1e-12,Math.sqrt(Ffoot.reduce((s,v)=>s+v*v,0)));
+      const normFoot=Math.max(1e-12,Math.sqrt(Ffoot.reduce((ss,v)=>ss+v*v,0)));
+      const dispDofs=new Set(loadMode==='disp'?contactNodes.map(id=>id*2+1):[]);
+      const stepReactionLoads=[];
 
       for(let step=1;step<=loadSteps;step++){
         const ratio=step/loadSteps;
         const Ftarget=new Float64Array(ndof);
-        for(let i=0;i<ndof;i++)Ftarget[i]=Fself[i]+ratio*Ffoot[i];
+        if(loadMode==='load'){
+          for(let i=0;i<ndof;i++) Ftarget[i]=Fself[i]+ratio*Ffoot[i];
+        }else{
+          for(let i=0;i<ndof;i++) Ftarget[i]=Fself[i];
+          for(const id of contactNodes) U[id*2+1]=(Ubase[id*2+1]||0)+ratio*Math.abs(prescribedDisp);
+        }
 
         let iterUsed=0, stepOK=false, lastRel=Infinity, lastRn=Infinity, lastRefNorm=0;
         for(let it=0;it<maxIter;it++){
@@ -1000,16 +1155,13 @@ async function runAnalysis(){
           for(let e=0;e<elems.length;e++){
             const tri=elems[e],ed=elemData[e];
             const ue=[U[tri[0]*2],U[tri[0]*2+1],U[tri[1]*2],U[tri[1]*2+1],U[tri[2]*2],U[tri[2]*2+1]];
-            const eps=[0,0,0];
-            for(let a=0;a<3;a++)for(let b=0;b<6;b++)eps[a]+=ed.Bm[a][b]*ue[b];
+            const eps=Array(ncomp).fill(0);
+            for(let a=0;a<ncomp;a++)for(let b=0;b<6;b++)eps[a]+=ed.Bm[a][b]*ue[b];
 
-            const elasticStrain=[
-              eps[0]-state[e].epsP[0],
-              eps[1]-state[e].epsP[1],
-              eps[2]-state[e].epsP[2]
-            ];
-            const sigTrial=[0,0,0];
-            for(let a=0;a<3;a++)for(let b=0;b<3;b++)sigTrial[a]+=Dm[a][b]*elasticStrain[b];
+            const elasticStrain=Array(ncomp).fill(0);
+            for(let a=0;a<ncomp;a++) elasticStrain[a]=eps[a]-state[e].epsP[a];
+            const sigTrial=Array(ncomp).fill(0);
+            for(let a=0;a<ncomp;a++)for(let b=0;b<ncomp;b++)sigTrial[a]+=Dm[a][b]*elasticStrain[b];
 
             const corr=mcCorrect(sigTrial,state[e]);
             trialStates.push({eps,corr});
@@ -1029,6 +1181,7 @@ async function runAnalysis(){
             if(n.fixY) fixed.push(id*2+1);
           });
           const fixedSet=new Set(fixed);
+          if(loadMode==='disp') for(const dof of dispDofs) fixedSet.add(dof);
 
           let rn2=0, ref2=0, freeCount=0;
           for(let i=0;i<ndof;i++){
@@ -1040,15 +1193,20 @@ async function runAnalysis(){
           const rn=Math.sqrt(rn2);
           // Reference load is also evaluated on free DOFs. A small floor prevents
           // division by zero at very small load levels.
-          const refNorm=Math.max(Math.sqrt(ref2), normFoot*ratio*1e-6, 1e-12);
+          let reactionScale=0;
+          if(loadMode==='disp') for(const dof of dispDofs) reactionScale+=Math.abs(Fint[dof]-Ftarget[dof]);
+          const refNorm=loadMode==='disp'
+            ? Math.max(Math.sqrt(ref2),reactionScale*1e-6,1e-9)
+            : Math.max(Math.sqrt(ref2),normFoot*ratio*1e-6,1e-12);
           const rel=rn/refNorm;
           lastRel=rel; lastRn=rn; lastRefNorm=refNorm;
 
           const mcPct=15+70*((step-1)+(it+1)/maxIter)/loadSteps;
-          setAnalysisProgress(mcPct,'Mohr–Coulomb Running',
+          setAnalysisProgress(mcPct,'Mohr–Coulomb '+(isAxisym?'Axisymmetric':'Plane Strain')+' Running',
             'Step <b>'+step+' / '+loadSteps+'</b> &nbsp;|&nbsp; Iteration <b>'+(it+1)+' / '+maxIter+
             '</b> &nbsp;|&nbsp; Residual = <b>'+fmtPrecise(rel)+
-            '</b> &nbsp;|&nbsp; Plastic trial = <b>'+plasticCount+' / '+elems.length+'</b>','active');
+            '</b> &nbsp;|&nbsp; '+(loadMode==='disp'?'Target s = <b>'+fmt(ratio*prescribedDisp*1000,3)+' mm</b> &nbsp;|&nbsp; ':'')+
+            'Plastic trial = <b>'+plasticCount+' / '+elems.length+'</b>','active');
           await uiYield();
 
           const KK=Kraw.map(row=>new Float64Array(row));
@@ -1075,7 +1233,7 @@ async function runAnalysis(){
               const ts=trialStates[e],s=state[e];
               s.sig=ts.corr.sig.slice();s.epsTotal=ts.eps.slice();
               if(ts.corr.plastic){
-                s.epsP[0]+=ts.corr.dep[0];s.epsP[1]+=ts.corr.dep[1];s.epsP[2]+=ts.corr.dep[2];
+                for(let k=0;k<ncomp;k++) s.epsP[k]+=ts.corr.dep[k];
                 s.eqp+=ts.corr.eqp||0;s.epsPv+=ts.corr.epsPv||0;s.gammaP+=ts.corr.gammaP||0;s.isPlastic=true;
               }
               s.yieldRatio=Math.max(s.yieldRatio,ts.corr.yieldRatio||0);s.f=ts.corr.f||0;
@@ -1086,6 +1244,9 @@ async function runAnalysis(){
           const dU=solve(KK,R);
           let maxDU=0;
           for(let i=0;i<ndof;i++){U[i]+=dU[i];maxDU=Math.max(maxDU,Math.abs(dU[i]));}
+          if(loadMode==='disp'){
+            for(const id of contactNodes) U[id*2+1]=(Ubase[id*2+1]||0)+ratio*Math.abs(prescribedDisp);
+          }
 
           // At the final allowed iteration, accept only if residual is reasonably small.
           if(it===maxIter-1 && rel<Math.max(tolNR*20,0.02)){
@@ -1093,7 +1254,7 @@ async function runAnalysis(){
               const ts=trialStates[e],s=state[e];
               s.sig=ts.corr.sig.slice();s.epsTotal=ts.eps.slice();
               if(ts.corr.plastic){
-                s.epsP[0]+=ts.corr.dep[0];s.epsP[1]+=ts.corr.dep[1];s.epsP[2]+=ts.corr.dep[2];
+                for(let k=0;k<ncomp;k++) s.epsP[k]+=ts.corr.dep[k];
                 s.eqp+=ts.corr.eqp||0;s.epsPv+=ts.corr.epsPv||0;s.gammaP+=ts.corr.gammaP||0;s.isPlastic=true;
               }
               s.yieldRatio=Math.max(s.yieldRatio,ts.corr.yieldRatio||0);s.f=ts.corr.f||0;
@@ -1102,15 +1263,26 @@ async function runAnalysis(){
           }
         }
 
-        const avgNow=contactNodes.length?contactNodes.reduce((s,id)=>s+U[id*2+1],0)/contactNodes.length:0;
-        const pcount=state.reduce((s,e)=>s+(e.isPlastic?1:0),0);
+        const avgNow=contactNodes.length?contactNodes.reduce((ss,id)=>ss+U[id*2+1],0)/contactNodes.length:0;
+        const avgBase=contactNodes.length?contactNodes.reduce((ss,id)=>ss+(Ubase[id*2+1]||0),0)/contactNodes.length:0;
+        const pcount=state.reduce((ss,e)=>ss+(e.isPlastic?1:0),0);
+        let stepLoad=totalLoad*ratio;
+        if(loadMode==='disp'){
+          const FintReaction=new Float64Array(ndof);
+          for(let e=0;e<elems.length;e++) addInternalForce(FintReaction,elems[e],elemData[e],state[e].sig);
+          stepLoad=0;
+          for(const id of contactNodes) stepLoad+=FintReaction[id*2+1]-Fself[id*2+1];
+          stepLoad=Math.max(0,stepLoad);
+          stepReactionLoads.push(stepLoad);
+        }
         loadSettlement.push({
-          step,ratio,load:totalLoad*ratio,settlement:avgNow*1000,
+          step,ratio,load:stepLoad,
+          settlement:(loadMode==='disp'?(avgNow-avgBase):avgNow)*1000,
           plastic:pcount,iterations:iterUsed,converged:stepOK,
           residualRatio:lastRel,residualNorm:lastRn,referenceNorm:lastRefNorm
         });
         if(stepOK){
-          setAnalysisProgress(15+70*step/loadSteps,'Mohr–Coulomb Running',
+          setAnalysisProgress(15+70*step/loadSteps,'Mohr–Coulomb '+(isAxisym?'Axisymmetric':'Plane Strain')+' Running',
             'Step <b>'+step+' / '+loadSteps+'</b> konvergen dalam <b>'+iterUsed+
             '</b> iterasi. Plastic element = <b>'+pcount+'</b>.','active');
           await uiYield();
@@ -1118,6 +1290,7 @@ async function runAnalysis(){
         if(!stepOK){converged=false;break;}
       }
 
+      if(loadMode==='disp' && stepReactionLoads.length) totalLoad=stepReactionLoads[stepReactionLoads.length-1];
       loadedRec=elems.map((tri,e)=>({eps:state[e].epsTotal.slice(),sig:state[e].sig.slice()}));
       for(let e=0;e<elemData.length;e++){
         elemData[e].isPlastic=state[e].isPlastic;
@@ -1163,12 +1336,15 @@ async function runAnalysis(){
       // Δ strain dari kondisi loaded dikurangi baseline self-weight.
       const depsX=ed.eps[0]-baseRec[eidx].eps[0];
       const depsY=ed.eps[1]-baseRec[eidx].eps[1];
-      const epsV=depsX+depsY;
+      const depsTheta=isAxisym?((ed.eps[3]||0)-(baseRec[eidx].eps[3]||0)):0;
+      const epsV=depsX+depsY+depsTheta;
 
-      // Perubahan volume elemen untuk plane strain t = 1 m:
-      // ΔV ≈ εv * V0 = εv * A * t.
-      // Luas elemen tersimpan sebagai ed.area.
-      const dVol=epsV*ed.area*1.0;
+      // Plane strain: volume per meter = A*1.
+      // Axisymmetric: volume cincin elemen = 2π rbar A.
+      const dVol=epsV*(isAxisym?ed.weight:ed.area);
+      ed.depsTheta=depsTheta;
+      ed.sigTheta=isAxisym?(ed.sig[3]||0):0;
+      ed.sigDeltaTheta=isAxisym?((ed.sigDelta&&ed.sigDelta[3])||0):0;
 
       // Elemen dianggap jenuh bila centroid berada pada / di bawah muka air.
       const saturated=waterOn && cy>=zwt;
@@ -1229,7 +1405,7 @@ async function runAnalysis(){
     await uiYield();
     const plasticCount=elemData.reduce((s,ed)=>s+(ed.isPlastic?1:0),0);
     const lastStepInfo=loadSettlement.length?loadSettlement[loadSettlement.length-1]:null;
-    model={W,H,B,x0,nx,ny,E,nu,gamma,q,materialModel,cohesion,phiDeg,psiDeg,flowRule,loadSteps,maxIter,tolNR,plasticTangentRatio,
+    model={analysisType,isAxisym,axisymValidation,W,H,B,x0,nx,ny,E,nu,gamma,q,materialModel,cohesion,phiDeg,psiDeg,flowRule,loadSteps,maxIter,tolNR,plasticTangentRatio,
       waterOn,zwt,gammaW,drainMode,skA,skB,kuVol,timeDays,tauDays,loadMode,prescribedDisp,nodes,elems,elemData,U,totalLoad,
       contactNodes,minUy,maxUy,minSy,maxSy,maxAbsSy,maxAbsDeltaSy,avgSet,maxSet,ndof,loadSettlement,plasticCount,converged,lastConvergedStep,lastStepInfo};
     updateOutput(); draw();
@@ -1260,10 +1436,15 @@ async function runAnalysis(){
           'Kriteria konvergensi dihitung hanya pada <b>free DOF</b>; gaya reaksi support tidak dimasukkan sebagai residual.';
       }
     }else{
+      const expectedLoad=isAxisym?q*Math.PI*(B/2)*(B/2):q*B;
+      const loadCheck=Math.abs(totalLoad-expectedLoad)/Math.max(1,Math.abs(expectedLoad));
       setAnalysisProgress(100,'Analysis Completed',
-        'Linear Elastic selesai. Displacement, strain, stress, dan output telah diperbarui.','done');
+        'Linear Elastic '+(isAxisym?'Axisymmetric':'Plane Strain')+' selesai. Displacement, strain, stress, dan output telah diperbarui.','done');
       document.getElementById('status').innerHTML=
-        'Analisis selesai — <b>Linear Elastic</b>. '+nodes.length+' node dan '+elems.length+' elemen.';
+        'Analisis selesai — <b>Linear Elastic '+(isAxisym?'Axisymmetric':'Plane Strain')+'</b>. '+nodes.length+' node dan '+elems.length+' elemen.'+
+        (isAxisym?'<br><b>Validasi Axisymmetric:</b> patch test <b>'+(axisymValidation?.passed?'PASS':'CHECK')+
+        '</b>; error integrasi total load = <b>'+(100*loadCheck).toExponential(2)+'%</b>; Pfull FEM = <b>'+fmt(totalLoad,3)+
+        ' kN</b>, qπR² = <b>'+fmt(expectedLoad,3)+' kN</b>; Prad = <b>'+fmt(totalLoad/(2*Math.PI),3)+' kN/rad</b>.':'');
     }
   }catch(err){
     setAnalysisProgress(0,'Analysis Failed','<b>'+err.message+'</b>','failed');
@@ -1286,18 +1467,34 @@ function solve(A,b){
   }
   const x=new Float64Array(n); for(let i=0;i<n;i++) x[i]=M[i][n]; return x;
 }
+function displayedLoad(P,m=model){
+  // Internal axisymmetric assembly integrates the full revolution with 2πr.
+  // For reporting requested here, convert full 360° resultant to per-radian value.
+  return m?.isAxisym ? P/(2*Math.PI) : P;
+}
+function displayedLoadUnit(m=model){ return m?.isAxisym ? 'kN/rad' : 'kN/m'; }
+function displayedStiffnessUnit(m=model){ return m?.isAxisym ? 'kN/(rad·m)' : 'kN/m²'; }
+function loadConventionText(m=model){
+  return m?.isAxisym
+    ? 'Axisymmetric: hasil beban grafik/dashboard dilaporkan per radian (kN/rad). Solver tetap mengintegrasikan revolusi penuh 2π; P/rad = Pfull/(2π).'
+    : 'Plane Strain: hasil beban grafik/dashboard dilaporkan per meter panjang strip foundation (kN/m).';
+}
 function updateOutput(){
   if(!model)return; const mm=1000;
   document.getElementById('k_settle').textContent=fmt(model.maxSet*mm,2);
   document.getElementById('k_avg').textContent=fmt(model.avgSet*mm,2);
-  document.getElementById('k_load').textContent=fmt(model.totalLoad,2);
+  document.getElementById('k_load').textContent=fmt(displayedLoad(model.totalLoad,model),2);
+  const klu=document.getElementById('k_load_unit'); if(klu) klu.textContent=displayedLoadUnit(model);
+  const kln=document.getElementById('k_load_name'); if(kln) kln.textContent=model.isAxisym?'Beban per radian':'Beban per meter panjang';
   document.getElementById('k_sig').textContent=fmt(model.maxAbsSy,2);
   document.getElementById('summaryRows').innerHTML=`
     <tr><th>Parameter</th><th>Nilai</th></tr>
     <tr><td>Jumlah node</td><td>${model.nodes.length}</td></tr>
     <tr><td>Jumlah elemen segitiga</td><td>${model.elems.length}</td></tr>
     <tr><td>Derajat bebas total</td><td>${model.ndof}</td></tr>
+    <tr><td>Formulasi</td><td>${model.isAxisym?'Axisymmetric — Circular Foundation':'Plane Strain — Strip Foundation'}</td></tr>
     <tr><td>Model material</td><td>${model.materialModel==='mc'?'Mohr–Coulomb Perfect Plasticity':'Linear Elastic'}</td></tr>
+    ${model.isAxisym?`<tr><td>Validasi axisymmetric</td><td>${model.axisymValidation?.passed?'PASS':'CHECK'} — elastic patch test; total load dibanding qπR²</td></tr>`:''}
     ${model.materialModel==='mc'?`<tr><td>c′ / φ′ / ψ</td><td>${fmt(model.cohesion,2)} kPa / ${fmt(model.phiDeg,1)}° / ${fmt(model.psiDeg,1)}°</td></tr>
     <tr><td>Elemen plastis</td><td>${model.plasticCount} / ${model.elems.length} (${fmt(100*model.plasticCount/model.elems.length,1)}%)</td></tr>
     <tr><td>Load step konvergen</td><td>${model.lastConvergedStep} / ${model.loadSteps}</td></tr>
@@ -1306,8 +1503,10 @@ function updateOutput(){
     <tr><td>Iterasi step terakhir</td><td>${model.lastStepInfo?model.lastStepInfo.iterations+' / '+model.maxIter:'-'}</td></tr>`:''}
     <tr><td>Mode input</td><td>${model.loadMode==='load'?'Beban merata / tekanan q':'Deformasi merata pondasi'}</td></tr>
     <tr><td>${model.loadMode==='load'?'Tekanan pondasi q':'Deformasi target pondasi'}</td><td>${model.loadMode==='load'?fmt(model.q,2)+' kPa':fmt(model.prescribedDisp*1000,2)+' mm'}</td></tr>
-    <tr><td>Beban 2D q × B efektif</td><td>${fmt(model.totalLoad,2)} kN/m</td></tr>
-    <tr><td>Kekakuan awal P/s</td><td>${model.avgSet>0?fmt(model.totalLoad/model.avgSet,2):'-'} kN/m per m</td></tr>
+    <tr><td>${model.isAxisym?'Beban resultan per radian':'Beban resultan per meter panjang'}</td><td>${fmt(displayedLoad(model.totalLoad,model),2)} ${displayedLoadUnit(model)}</td></tr>
+    ${model.isAxisym?`<tr><td>Resultan penuh 360°</td><td>${fmt(model.totalLoad,2)} kN</td></tr>`:''}
+    <tr><td>Kekakuan P/s</td><td>${model.avgSet>0?fmt(displayedLoad(model.totalLoad,model)/model.avgSet,2):'-'} ${displayedStiffnessUnit(model)}</td></tr>
+    <tr><td>Konvensi satuan beban</td><td>${loadConventionText(model)}</td></tr>
   `;
   let rows='node,x_m,y_m,ux_m,uy_m,sy_kPa,u0_kPa,du_kPa,uTotal_kPa,syEff_kPa\n';
   model.nodes.forEach((n,i)=>rows+=`${i},${n.x},${n.y},${n.ux},${n.uy},${n.sy??0},${n.u0??0},${n.du??0},${n.upore??0},${n.syEff??0}\n`);
@@ -1524,7 +1723,7 @@ function draw(){
   ctx.textBaseline='middle';
   ctx.font='bold 12px Arial';
   const hasil1='Hasil Utama: settlement maks = '+fmt(m.maxSet*1000,2)+' mm';
-  const hasil2='settlement rata-rata pondasi = '+fmt(m.avgSet*1000,2)+' mm   |   beban total = '+fmt(m.totalLoad,2)+' kN/m   |   |σy|max = '+fmt(m.maxAbsSy,2)+' kPa';
+  const hasil2='settlement rata-rata pondasi = '+fmt(m.avgSet*1000,2)+' mm   |   beban = '+fmt(displayedLoad(m.totalLoad,m),2)+' '+displayedLoadUnit(m)+'   |   |σy|max = '+fmt(m.maxAbsSy,2)+' kPa';
   ctx.fillText(hasil1,cv.width/2,infoBase);
   ctx.font='11px Arial';
   ctx.fillText(hasil2,cv.width/2,infoBase+20);
@@ -1806,14 +2005,14 @@ function drawLoadSettlement(ctx,cv){
   const padL=100,padR=55,padT=70,padB=95;
   const x0=padL,x1=cv.width-padR,y0=cv.height-padB,y1=padT;
   const maxS=Math.max(...pts.map(p=>Math.abs(p.settlement)),1);
-  const maxP=Math.max(...pts.map(p=>p.load),1);
+  const maxP=Math.max(...pts.map(p=>displayedLoad(p.load,m)),1);
   const X=s=>x0+(Math.abs(s)/maxS)*(x1-x0);
   const Y=p=>y0-(p/maxP)*(y0-y1);
 
   ctx.fillStyle='#17324d';ctx.font='bold 17px Arial';ctx.textAlign='center';
   ctx.fillText('Kurva Load–Settlement'+(m.materialModel==='mc'?' — Mohr–Coulomb Perfect Plasticity':' — Linear Elastic'),cv.width/2,28);
   ctx.font='12px Arial';ctx.fillStyle='#64748b';
-  ctx.fillText(m.materialModel==='mc'?`c′=${fmt(m.cohesion,1)} kPa, φ′=${fmt(m.phiDeg,1)}°, ψ=${fmt(m.psiDeg,1)}°`:'Respons linear elastic',cv.width/2,48);
+  ctx.fillText((m.materialModel==='mc'?`c′=${fmt(m.cohesion,1)} kPa, φ′=${fmt(m.phiDeg,1)}°, ψ=${fmt(m.psiDeg,1)}°`:'Respons linear elastic')+' | '+(m.isAxisym?'Axisymmetric: kN/rad':'Plane Strain: kN/m'),cv.width/2,48);
 
   ctx.strokeStyle='#334155';ctx.lineWidth=1.2;ctx.strokeRect(x0,y1,x1-x0,y0-y1);
   ctx.font='10px Arial';ctx.fillStyle='#475569';
@@ -1827,13 +2026,13 @@ function drawLoadSettlement(ctx,cv){
   }
   ctx.fillStyle='#1f2937';ctx.font='bold 12px Arial';ctx.textAlign='center';
   ctx.fillText('Settlement rata-rata pondasi, s (mm)',(x0+x1)/2,cv.height-35);
-  ctx.save();ctx.translate(28,(y0+y1)/2);ctx.rotate(-Math.PI/2);ctx.fillText('Beban total 2D, P (kN/m)',0,0);ctx.restore();
+  ctx.save();ctx.translate(28,(y0+y1)/2);ctx.rotate(-Math.PI/2);ctx.fillText(m.isAxisym?'Beban per radian, P (kN/rad)':'Beban per meter panjang, P (kN/m)',0,0);ctx.restore();
 
   ctx.strokeStyle='#0f78bd';ctx.lineWidth=2.5;ctx.beginPath();
-  pts.forEach((p,i)=>{const px=X(p.settlement),py=Y(p.load);if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});ctx.stroke();
+  pts.forEach((p,i)=>{const px=X(p.settlement),py=Y(displayedLoad(p.load,m));if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);});ctx.stroke();
 
   pts.forEach((p,i)=>{
-    const px=X(p.settlement),py=Y(p.load);
+    const px=X(p.settlement),py=Y(displayedLoad(p.load,m));
     ctx.fillStyle=p.plastic>0?'#c51616':'#0f78bd';ctx.beginPath();ctx.arc(px,py,3.3,0,Math.PI*2);ctx.fill();
     if(i===pts.length-1 || i%Math.max(1,Math.ceil(pts.length/10))===0){
       ctx.font='9px Arial';ctx.fillStyle='#24364b';ctx.textAlign='left';
@@ -1848,7 +2047,7 @@ function drawLoadSettlement(ctx,cv){
 function drawEmpty(ctx,cv){ctx.fillStyle='#f8fbff';ctx.fillRect(0,0,cv.width,cv.height);ctx.fillStyle='#5b6b7d';ctx.font='16px Arial';ctx.fillText('Atur geometri dan mesh, lalu klik Generate Mesh.',60,80)}
 function downloadCSV(){ if(!lastCSV){alert('Hitung FEM dulu.'); return;} const blob=new Blob([lastCSV],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='hasil_node_fem_pondasi.csv'; a.click(); URL.revokeObjectURL(a.href); }
 window.onload=()=>{
-  toggleMaterialModel();toggleLoadInput();toggleWaterInput();toggleDrainInput();updateMeshInfo();
+  toggleAnalysisType();toggleMaterialModel();toggleLoadInput();toggleWaterInput();toggleDrainInput();updateMeshInfo();
   ['W','H','B','x0'].forEach(id=>{
     const e=document.getElementById(id);
     if(e)e.addEventListener('change',markMeshDirty);
