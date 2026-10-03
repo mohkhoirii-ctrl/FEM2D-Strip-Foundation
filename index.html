@@ -135,11 +135,15 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:none}
 .kpi .unit{font-size:12px;color:var(--muted)}
 
 /* ---------- Tabs & canvas ---------- */
-.tabs{display:flex;gap:4px;padding:10px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
-.tab{flex:none;background:transparent;color:var(--muted);padding:9px 11px;border:none;border-bottom:2px solid transparent;border-radius:0;font:500 13px var(--sans);cursor:pointer;white-space:nowrap}
-.tab:hover{color:var(--ink)}
-.tab.active{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs{display:flex;flex-direction:column;gap:6px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+.tabRow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.tabGroup{flex:0 0 auto;min-width:74px;margin-right:4px;font:500 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.tab{flex:none;background:transparent;color:var(--ink-2);padding:6px 10px;border:1px solid transparent;border-radius:8px;font:500 13px var(--sans);cursor:pointer;white-space:nowrap}
+.tab:hover{background:var(--surface-2);color:var(--ink)}
+.tab.active{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:600}
+.tab:focus-visible{outline:2px solid var(--accent-line);outline-offset:1px}
 .tab.dim{opacity:.5}
+@media(max-width:700px){.tabGroup{flex-basis:100%}}
 .canvasPanel{padding:14px}
 .toolbar{display:flex;gap:10px 12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
 .toolbar>div{min-width:150px;flex:0 1 210px}
@@ -333,19 +337,25 @@ td:last-child{font-variant-numeric:tabular-nums}
     </section>
 
     <section class="card">
-      <div class="tabs" role="tablist">
-        <button class="tab active" data-view="uy">Deformasi</button>
-        <button class="tab" data-view="deltaV">Regangan &amp; ΔV</button>
-        <button class="tab" data-view="sy">Tambahan tegangan Δσᵧ</button>
-        <button class="tab" data-view="stotal">Tegangan total σᵧ</button>
-        <button class="tab" data-view="pore">Tekanan pori u</button>
-        <button class="tab" data-view="seff">Tegangan efektif σ′ᵧ</button>
-        <button class="tab" data-view="plasticity" id="plasticityTab">Plastisitas</button>
-        <button class="tab" data-view="baseStress">Diagram dasar pondasi</button>
-        <button class="tab" data-view="loadsettle" id="loadSettlementTab">Beban–penurunan</button>
-        <button class="tab" data-view="cross">Cross-section</button>
-        <button class="tab" data-view="mesh">Mesh</button>
-        <button class="tab" data-view="theory">Dasar teori</button>
+      <div class="tabs" role="tablist" aria-label="Menu hasil">
+        <div class="tabRow">
+          <span class="tabGroup">Kontur</span>
+          <button class="tab active" data-view="uy">Deformasi</button>
+          <button class="tab" data-view="deltaV">Regangan &amp; ΔV</button>
+          <button class="tab" data-view="sy" title="Tambahan tegangan vertikal akibat pondasi">Δσᵧᵧ tambahan</button>
+          <button class="tab" data-view="stotal" title="Tegangan total vertikal">σᵧᵧ total</button>
+          <button class="tab" data-view="pore" title="Tekanan air pori p_steady, p_excess, p_active">Tekanan pori p</button>
+          <button class="tab" data-view="seff" title="Tegangan efektif vertikal">σ′ᵧᵧ efektif</button>
+          <button class="tab" data-view="plasticity" id="plasticityTab">Plastisitas</button>
+        </div>
+        <div class="tabRow">
+          <span class="tabGroup">Grafik</span>
+          <button class="tab" data-view="loadsettle" id="loadSettlementTab">Beban–perpindahan</button>
+          <button class="tab" data-view="baseStress">Diagram dasar pondasi</button>
+          <button class="tab" data-view="cross">Cross-section</button>
+          <button class="tab" data-view="mesh">Mesh</button>
+          <button class="tab" data-view="theory">Dasar teori</button>
+        </div>
       </div>
       <div class="canvasPanel">
         <div id="toolbar" class="toolbar">
