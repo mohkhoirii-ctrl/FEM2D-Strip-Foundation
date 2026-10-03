@@ -1,8 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>FEM Pondasi Dangkal 2D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -202,8 +198,7 @@ td:last-child{font-variant-numeric:tabular-nums}
   .workflowStatus{grid-template-columns:1fr}
 }
 </style>
-</head>
-<body>
+
 <header class="top">
   <div class="top-inner">
     <div>
@@ -306,7 +301,7 @@ td:last-child{font-variant-numeric:tabular-nums}
           <div class="row" id="qRow"><label for="q">Beban merata qᵧ (kN/m²)</label><input id="q" type="number" value="-150" step="10"></div>
           <div class="row" id="dispRow" style="display:none"><label for="prescribedDisp">Perpindahan uᵧ (mm)</label><input id="prescribedDisp" type="number" value="-50" step="1"></div>
         </div>
-        <div class="hint"><b>Konvensi tanda PLAXIS:</b> beban dan perpindahan ke bawah bernilai negatif (mis. qᵧ = −150 kN/m², uᵧ = −50 mm). Load control = pondasi fleksibel. Displacement control = pondasi kaku licin (u<sub>y</sub> seragam, u<sub>x</sub> bebas) — cocok untuk menelusuri beban batas.</div>
+        <div class="hint"><b>Konvensi tanda:</b> beban dan perpindahan ke bawah bernilai negatif (mis. qᵧ = −150 kN/m², uᵧ = −50 mm). Load control = pondasi fleksibel. Displacement control = pondasi kaku licin (u<sub>y</sub> seragam, u<sub>x</sub> bebas) — cocok untuk menelusuri beban batas.</div>
 
         <div class="workflowStatus">
           <div id="wfMesh" class="workflowStep warn">① Mesh</div>
@@ -410,8 +405,8 @@ td:last-child{font-variant-numeric:tabular-nums}
 <h3>Dasar Teori FEM Pondasi Dangkal 2D, Muka Air Tanah dan Drainase</h3>
 <p><span class="badge">Tujuan</span> Program ini adalah media pembelajaran untuk menghubungkan respons deformasi FEM, perubahan tegangan, muka air tanah, tekanan air pori hidrostatik, tekanan air pori berlebih, dan tegangan efektif.</p>
 <div class="warnBox"><b>Batas model:</b> tersedia Linear Elastic dan Mohr–Coulomb perfectly plastic. Integrasi tegangan memakai return mapping multi-surface yang eksak untuk permukaan MC linier (bidang utama, tepi, apex) dengan tegangan keluar bidang σ<sub>z</sub>/σ<sub>θ</sub> ikut dilacak. Sistem global diselesaikan dengan tangen konsisten (atau initial stiffness), line search, dan pemotongan step otomatis. Tekanan pori tetap one-way/pasca-proses, bukan coupled hydro-mechanical u–p.</div>
-<h3>Konvensi Tanda (mengikuti PLAXIS)</h3>
-<p>Seluruh input, kontur, grafik, tabel, dan ekspor CSV memakai konvensi tanda yang sama dengan PLAXIS:</p>
+<h3>Konvensi Tanda</h3>
+<p>Seluruh input, kontur, grafik, tabel, dan ekspor CSV memakai konvensi tanda mekanika berikut (tarik positif, sumbu y ke atas):</p>
 <div style="overflow-x:auto"><table style="font-family:var(--sans);font-size:13.5px;margin:8px 0 12px">
 <tr><th>Besaran</th><th>Positif (+)</th><th>Negatif (−)</th><th>Contoh</th></tr>
 <tr><td>Koordinat y</td><td>ke atas (elevasi)</td><td>ke bawah</td><td>permukaan y = 0, dasar domain y = −D</td></tr>
@@ -423,7 +418,7 @@ td:last-child{font-variant-numeric:tabular-nums}
 <tr><td>Tegangan geser σ<sub>xy</sub></td><td colspan="3">mengikuti sumbu x ke kanan dan y ke atas</td></tr>
 </table></div>
 <p>Prinsip tegangan efektif dalam konvensi ini ditulis <span class="formula">σ′ = σ − p</span>: karena σ dan p sama-sama negatif saat tekan, misalnya σ<sub>yy</sub> = −100 kPa dan p = −30 kPa menghasilkan σ′<sub>yy</sub> = −70 kPa. Tekanan pori aktif <span class="formula">p<sub>active</sub> = p<sub>steady</sub> + p<sub>excess</sub></span>.</p>
-<p>Kurva beban–perpindahan digambar sebagai −u<sub>y</sub> terhadap −F<sub>y</sub> agar berada di kuadran pertama, seperti tampilan kurva PLAXIS dengan sumbu dibalik. Di dalam solver, program tetap memakai sumbu kedalaman (ke bawah positif) dan konvensi kompresi-positif untuk persamaan Mohr–Coulomb dan Skempton; seluruh hasil dikonversi ke konvensi di atas sebelum ditampilkan. Persamaan pada bab-bab berikut ditulis dengan kedalaman z ke bawah dan tekanan pori u (tekan +) agar sesuai buku teks, dengan hubungan <span class="formula">p = −u</span> dan <span class="formula">y = −z</span>.</p>
+<p>Kurva beban–perpindahan digambar sebagai −u<sub>y</sub> terhadap −F<sub>y</sub> agar berada di kuadran pertama, seperti kurva beban–penurunan yang lazim dengan sumbu dibalik. Di dalam solver, program tetap memakai sumbu kedalaman (ke bawah positif) dan konvensi kompresi-positif untuk persamaan Mohr–Coulomb dan Skempton; seluruh hasil dikonversi ke konvensi di atas sebelum ditampilkan. Persamaan pada bab-bab berikut ditulis dengan kedalaman z ke bawah dan tekanan pori u (tekan +) agar sesuai buku teks, dengan hubungan <span class="formula">p = −u</span> dan <span class="formula">y = −z</span>.</p>
 <h3>0. Alur FEM dalam Program</h3>
 <div class="eq"><span class="formula">Geometri → Generate Mesh → Model Material → Boundary & Loading → Run Analysis → Post-processing</span></div>
 <p>Mesh dibuat sebagai tahap tersendiri. Perubahan W, D, B, posisi pondasi, jumlah elemen, atau distribusi mesh akan menandai mesh sebagai <b>perlu di-generate ulang</b>. Perubahan E, ν, c′, φ′, ψ, muka air, atau beban tidak mengubah topologi mesh sehingga tidak memerlukan generate ulang.</p>
@@ -529,7 +524,7 @@ td:last-child{font-variant-numeric:tabular-nums}
 <p>Tekanan air pori total kemudian:</p>
 <div class="eq"><span class="formula">u=u<sub>0</sub>+Δu</span></div>
 <h3>6A. Berat Isi Tak Jenuh dan Jenuh (γ<sub>unsat</sub>, γ<sub>sat</sub>)</h3>
-<p>Seperti pada PLAXIS, tanah di atas muka air tanah memakai berat isi tak jenuh <b>γ<sub>unsat</sub></b>, sedangkan tanah di bawah muka air tanah memakai berat isi jenuh <b>γ<sub>sat</sub></b>. Untuk elemen yang terpotong garis MAT, berat isinya dibobot menurut fraksi luas elemen di bawah MAT:</p>
+<p>Tanah di atas muka air tanah memakai berat isi tak jenuh <b>γ<sub>unsat</sub></b>, sedangkan tanah di bawah muka air tanah memakai berat isi jenuh <b>γ<sub>sat</sub></b>. Untuk elemen yang terpotong garis MAT, berat isinya dibobot menurut fraksi luas elemen di bawah MAT:</p>
 <div class="eq"><span class="formula">γ<sub>e</sub> = (1 − f<sub>sat</sub>) γ<sub>unsat</sub> + f<sub>sat</sub> γ<sub>sat</sub></span></div>
 <p>Bila muka air tanah tidak diaktifkan, seluruh tanah memakai γ<sub>unsat</sub>. Gaya berat nodal ekuivalen tiap elemen adalah γ<sub>e</sub>·V<sub>e</sub>/3 per node.</p>
 <p>Solver menghitung <b>tegangan efektif</b> σ′ sebagai variabel konstitutif (kriteria Mohr–Coulomb memakai σ′), sedangkan tekanan pori tunak bekerja sebagai beban tambahan. Dengan σ = σ′ − u·m (tarik +, u tekan +, m = [1, 1, 0, 1]<sup>T</sup>), persamaan keseimbangan menjadi:</p>
@@ -582,7 +577,7 @@ td:last-child{font-variant-numeric:tabular-nums}
 <h4>Node displacement (●)</h4>
 <p>Displacement merupakan <b>primary unknown</b> FEM. Setiap node memiliki dua derajat bebas:</p>
 <div class="eq"><span class="formula">{u}<sub>i</sub>=[u<sub>x,i</sub>&nbsp; u<sub>y,i</sub>]<sup>T</sup></span></div>
-<p>Dengan konvensi PLAXIS, u<sub>y</sub> positif berarti bergerak ke atas, sehingga penurunan bernilai negatif.</p>
+<p>Dengan konvensi ini, u<sub>y</sub> positif berarti bergerak ke atas, sehingga penurunan bernilai negatif.</p>
 
 <h4>Stress point elemen (×)</h4>
 <p>Pada elemen CST, regangan dan tegangan konstan di dalam satu elemen. Oleh karena itu nilai tegangan elemen ditampilkan pada <b>centroid segitiga</b> sebagai stress point:</p>
@@ -685,7 +680,7 @@ td:last-child{font-variant-numeric:tabular-nums}
    FEM Pondasi Dangkal 2D — engine
    Satuan: kN, m, kPa.
    Internal solver : y positif ke bawah (kedalaman), u_y internal > 0 = turun.
-   Semua TAMPILAN, input, dan ekspor mengikuti konvensi PLAXIS:
+   Semua TAMPILAN, input, dan ekspor memakai konvensi tanda:
      - sumbu y ke atas (elevasi; permukaan y = 0, dasar y = −D)
      - perpindahan & gaya ke atas positif, ke bawah negatif
      - tegangan & tekanan air pori: tarik positif, tekan negatif
@@ -1239,7 +1234,7 @@ async function runAnalysis(){
     function nodalAvg(get){ const out=new Float64Array(nN); elemData.forEach(d=>{const v=get(d)*d.weight; d.tri.forEach(id=>out[id]+=v);}); for(let i=0;i<nN;i++) out[i]/=wsum[i]||1; return out; }
     const nSy=nodalAvg(d=>d.syC), nDsy=nodalAvg(d=>d.dsyC), nU0=nodalAvg(d=>d.u0), nDu=nodalAvg(d=>d.du), nU=nodalAvg(d=>d.u), nEff=nodalAvg(d=>d.seffC);
     nodes.forEach((n,i)=>{n.syC=nSy[i];n.dsyC=nDsy[i];n.u0=nU0[i];n.du=nDu[i];n.upore=nU[i];n.seffC=nEff[i];});
-    // ---- Besaran tampilan konvensi PLAXIS (y ke atas, tarik +, tekan −)
+    // ---- Besaran tampilan (y ke atas, tarik +, tekan −)
     const nDuVol=nodalAvg(d=>d.duVol), nDuSk=nodalAvg(d=>d.duSk);
     nodes.forEach((n,i)=>{ n.yE=-n.y; n.Ux=n.dux; n.Uy=-n.duy; n.UyTot=-n.uy; n.UxTot=n.ux;
       n.syy=-n.syC; n.dsyy=-n.dsyC; n.pSteady=-n.u0; n.pExcess=-n.du; n.pActive=-n.upore; n.pExVol=-nDuVol[i]; n.pExSk=-nDuSk[i];
@@ -1274,7 +1269,7 @@ async function runAnalysis(){
       $('status').className='status ok';
       $('status').innerHTML='<b>Selesai — '+title+'.</b> '+nN+' node, '+nE+' elemen, '+ndof+' DOF.'+
         (isMC?' Titik plastis aktif: <b>'+plasticCount+'</b> ('+fmt(100*plasticCount/nE,1)+'%).'+gravityNote:'')+
-        (!isDisp?'<br>Kontrol beban: F<sub>y,FEM</sub> = '+fmt(-displayedLoad(totalLoadRef),2)+' '+displayedLoadUnit()+' = q<sub>y</sub>·'+(isAxisym?'πR²/2π':'B')+' ✓':'');
+        (!isDisp?'<br>Kontrol beban: F<sub>y,FEM</sub> = '+fmt(-displayedLoad(totalLoadRef),2)+' '+displayedLoadUnit()+' = q<sub>y</sub>·'+(isAxisym?'πR²/2π':'B')+' ✓'+(isAxisym?' · total 360°: F<sub>y</sub> = '+fmt(-totalLoadRef,2)+' kN':''):'');
     }else{
       const fl=failInfo?fmt(failInfo.target,3):'–';
       setAnalysisProgress(12+80*lam,'Berhenti — tidak konvergen','Step terakhir yang konvergen: faktor beban <b>'+fmt(lam,3)+'</b>. Gagal pada faktor '+fl+' (residual '+fmtPrecise(failInfo?.rel)+').','failed');
@@ -1306,6 +1301,7 @@ function displayedLoadUnit(m=model){ return m?.isAxisym?'kN/rad':'kN/m'; }
 
 function clearOutputs(){
   ['k_settle','k_avg','k_load','k4'].forEach(id=>$(id).textContent='–');
+  { const ax=$('analysisType').value==='axisym'; $('k_load_name').textContent=ax?'Gaya pondasi Fᵧ (total)':'Gaya pondasi Fᵧ per meter panjang'; $('k_load_unit').textContent=ax?'kN total 360°':'kN/m'; }
   $('summaryRows').innerHTML='<tr><th>Parameter</th><th>Nilai</th></tr><tr><td colspan="2" class="small">Belum ada hasil analisis.</td></tr>';
   lastCSV='';
 }
@@ -1313,12 +1309,11 @@ function updateOutput(){
   const m=model; if(!m) return;
   $('k_settle').textContent=fmt(-m.maxSet*1000,2);
   $('k_avg').textContent=fmt(-m.avgSet*1000,2);
-  $('k_load').textContent=fmt(-displayedLoad(m.totalLoad),1);
-  $('k_load_unit').textContent=displayedLoadUnit();
-  $('k_load_name').textContent=m.isAxisym?'Gaya pondasi Fᵧ per radian':'Gaya pondasi Fᵧ per meter';
+  if(m.isAxisym){ $('k_load').textContent=fmt(-m.totalLoad,1); $('k_load_unit').textContent='kN total 360° · = '+fmt(-displayedLoad(m.totalLoad),1)+' kN/rad'; $('k_load_name').textContent='Gaya pondasi Fᵧ (total)'; }
+  else{ $('k_load').textContent=fmt(-displayedLoad(m.totalLoad),1); $('k_load_unit').textContent='kN/m · per 1 m panjang pondasi menerus'+(m.loadMode==='load'?' (qᵧ·B = '+fmt(m.qy,0)+' × '+fmt(m.B,2)+')':''); $('k_load_name').textContent='Gaya pondasi Fᵧ per meter panjang'; }
   if(m.isMC&&m.bc){ $('k4_name').textContent='Rasio beban P / P_ult analitis'; $('k4').textContent=fmt(m.totalLoad/m.Pult,2); $('k4_unit').textContent='titik plastis: '+m.plasticCount+' / '+m.elems.length; }
   else{ $('k4_name').textContent='Δσᵧᵧ minimum'; $('k4').textContent=fmt(Math.min(...m.elemData.map(d=>d.dsyy)),1); $('k4_unit').textContent='kPa · tekan negatif'; }
-  const L=v=>fmt(displayedLoad(v),2)+' '+displayedLoadUnit(); const LF=v=>fmt(-displayedLoad(v),2)+' '+displayedLoadUnit();
+  const L=v=>fmt(displayedLoad(v),2)+' '+displayedLoadUnit()+(m.isAxisym?' (total '+fmt(v,1)+' kN)':''); const LF=v=>fmt(-displayedLoad(v),2)+' '+displayedLoadUnit();
   const rows=[
     ['Formulasi',m.isAxisym?'Axisymmetric — pondasi lingkaran':'Plane Strain — pondasi menerus'],
     ['Node / elemen / DOF',m.nodes.length+' / '+m.elems.length+' / '+m.ndof],
@@ -1342,18 +1337,18 @@ function updateOutput(){
   rows.push([m.isAxisym?'Gaya Fᵧ per radian':'Gaya Fᵧ per meter panjang',LF(m.totalLoad)]);
   if(m.isAxisym) rows.push(['Resultan penuh 360°, Fᵧ',fmt(-m.totalLoad,2)+' kN']);
   rows.push(['uᵧ rata-rata dasar pondasi / uᵧ minimum',fmt(-m.avgSet*1000,3)+' / '+fmt(-m.maxSet*1000,3)+' mm']);
-  rows.push(['Kekakuan sekan Fᵧ/uᵧ',m.avgSet>0?fmt(displayedLoad(m.totalLoad)/(m.avgSet),0)+' '+(m.isAxisym?'kN/(rad·m)':'kN/m²'):'–']);
+  rows.push(['Kekakuan sekan Fᵧ/uᵧ',m.avgSet>0?(m.isAxisym?fmt(m.totalLoad/m.avgSet,0)+' kN/m (total 360°) = '+fmt(displayedLoad(m.totalLoad)/m.avgSet,0)+' kN/(rad·m)':fmt(m.totalLoad/m.avgSet,0)+' kN/m per meter panjang (kN/m²)'):'–']);
   if(m.waterOn) rows.push(['Air tanah','muka air y = '+fmt(-m.zwt,2)+' m, '+({drained:'drained',undrained:'undrained (Skempton A = '+fmt(m.skA,2)+', B = '+fmt(m.skB,2)+')',consolidation:'konsolidasi, t = '+fmt(m.timeDays,0)+' hari, τ = '+fmt(m.tauDays,0)+' hari'}[m.drainMode])]);
-  rows.push(['Konvensi tanda','Mengikuti PLAXIS: y ke atas; gaya & perpindahan ke atas +; tegangan & tekanan pori tarik +, tekan −; regangan ekspansi +']);
+  rows.push(['Konvensi tanda','y ke atas; gaya & perpindahan ke atas +; tegangan & tekanan pori tarik +, tekan −; regangan ekspansi +']);
   $('summaryRows').innerHTML='<tr><th>Parameter</th><th>Nilai</th></tr>'+rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
   // CSV
-  let csv='# FEM Pondasi Dangkal 2D\n# formulasi,'+m.analysisType+'\n# material,'+m.materialModel+'\n# Fy,'+(-displayedLoad(m.totalLoad))+','+displayedLoadUnit()+'\n# konvensi PLAXIS: y ke atas (elevasi); u & F ke atas positif; tegangan dan tekanan pori tarik positif / tekan negatif; regangan ekspansi positif\n\n';
+  let csv='# FEM Pondasi Dangkal 2D\n# formulasi,'+m.analysisType+'\n# material,'+m.materialModel+'\n# Fy,'+(-displayedLoad(m.totalLoad))+','+displayedLoadUnit()+(m.isAxisym?'\n# Fy_total_360,'+(-m.totalLoad)+',kN':'')+'\n# konvensi tanda: y ke atas (elevasi); u & F ke atas positif; tegangan dan tekanan pori tarik positif / tekan negatif; regangan ekspansi positif\n\n';
   csv+='NODE RESULTS\nnode,x_m,y_m,ux_m,uy_m,dux_m,duy_m,syy_kPa,dsyy_kPa,p_steady_kPa,p_excess_kPa,p_active_kPa,syy_eff_kPa\n';
   m.nodes.forEach((n,i)=>csv+=[i+1,n.x,n.yE,n.UxTot,n.UyTot,n.Ux,n.Uy,n.syy,n.dsyy,n.pSteady,n.pExcess,n.pActive,n.syyEff].join(',')+'\n');
   csv+='\nELEMENT RESULTS\nelement,xc_m,yc_m,gamma_kN_m3,sxx_kPa,syy_kPa,sxy_kPa,szz_kPa,sxx_eff_kPa,szz_eff_kPa,eps_v,dV,p_active_kPa,syy_eff_kPa,plastic_now,plastic_ever,return_mode,mobilization,eqPlasticStrain,epsPv,gammaP\n';
   m.elemData.forEach((d,i)=>csv+=[i+1,d.cx,d.yE,d.gammaE,d.sxx,d.syy,d.sxy,d.szz,d.sxx-d.pActive,d.szz-d.pActive,d.epsV,d.dVol,d.pActive,d.syyEff,d.isPlastic?1:0,d.ever?1:0,d.mode,d.yieldRatio,d.eqPlasticStrain,d.epsPv,d.gammaP].join(',')+'\n');
-  csv+='\nLOAD-DISPLACEMENT\nstep,load_factor,Fy_'+displayedLoadUnit().replace('/','_per_')+',uy_mm,plastic_points,iterations\n';
-  m.loadSettlement.forEach(p=>csv+=[p.step,p.ratio,-displayedLoad(p.load),-p.settlement,p.plastic,p.iterations].join(',')+'\n');
+  csv+='\nLOAD-DISPLACEMENT\nstep,load_factor,Fy_'+displayedLoadUnit().replace('/','_per_')+(m.isAxisym?',Fy_total_kN':'')+',uy_mm,plastic_points,iterations\n';
+  m.loadSettlement.forEach(p=>csv+=[p.step,p.ratio,-displayedLoad(p.load),...(m.isAxisym?[-p.load]:[]),-p.settlement,p.plastic,p.iterations].join(',')+'\n');
   lastCSV=csv;
 }
 function showExport(title,html){ $('exportTitle').textContent=title; $('exportBody').innerHTML=html; $('exportPanel').hidden=false; $('exportPanel').scrollIntoView({block:'nearest',behavior:'smooth'}); }
@@ -1736,13 +1731,13 @@ function drawPlot(ctx,V,T,o){
 }
 
 function drawLoadSettlement(ctx,V,T){
-  // Konvensi PLAXIS: uᵧ dan Fᵧ negatif (ke bawah). Kurva digambar sebagai −uᵧ vs −Fᵧ agar berada di kuadran pertama.
+  // Konvensi tanda: uᵧ dan Fᵧ negatif (ke bawah). Kurva digambar sebagai −uᵧ vs −Fᵧ agar berada di kuadran pertama.
   const m=model, u=displayedLoadUnit(), pts=m.loadSettlement;
   const firstY=pts.findIndex(p=>p.plastic>0&&p.step>0);
   const fem=pts.map((p,i)=>({x:p.settlement,y:displayedLoad(p.load),color:p.plastic>0?T.accent:(T.dark?'#A6A49B':'#73726C'),
-    tip:`<b>Step ${p.step}</b> · faktor ${fmt(p.ratio,3)}<br>uᵧ = <span class="mono">${fmt(-p.settlement,3)}</span> mm<br>Fᵧ = <span class="mono">${fmt(-displayedLoad(p.load),2)}</span> ${u}`+(m.isMC?`<br>titik plastis ${p.plastic}${p.iterations?' · '+p.iterations+' iterasi':''}`:''),
-    label:i===pts.length-1&&pts.length>1?'Fᵧ = '+fmt(-displayedLoad(p.load),1)+' '+u:(i===firstY?'leleh pertama':null),mark:i===firstY||i===pts.length-1}));
-  const refs=[]; if(m.isMC&&m.Pult) refs.push({axis:'y',v:displayedLoad(m.Pult),label:'|F_ult| analitis (Vesić) = '+fmt(displayedLoad(m.Pult),1)+' '+u,color:T.info});
+    tip:`<b>Step ${p.step}</b> · faktor ${fmt(p.ratio,3)}<br>uᵧ = <span class="mono">${fmt(-p.settlement,3)}</span> mm<br>Fᵧ = <span class="mono">${fmt(-displayedLoad(p.load),2)}</span> ${u}`+(m.isAxisym?`<br>total 360°: <span class="mono">${fmt(-p.load,1)}</span> kN`:'')+(m.isMC?`<br>titik plastis ${p.plastic}${p.iterations?' · '+p.iterations+' iterasi':''}`:''),
+    label:i===pts.length-1&&pts.length>1?'Fᵧ = '+fmt(-displayedLoad(p.load),1)+' '+u+(m.isAxisym?' (total '+fmt(-p.load,0)+' kN)':''):(i===firstY?'leleh pertama':null),mark:i===firstY||i===pts.length-1}));
+  const refs=[]; if(m.isMC&&m.Pult) refs.push({axis:'y',v:displayedLoad(m.Pult),label:'|F_ult| analitis (Vesić) = '+fmt(displayedLoad(m.Pult),1)+' '+u+(m.isAxisym?' (total '+fmt(m.Pult,0)+' kN)':''),color:T.info});
   const legend=[{label:'FEM',color:T.accent,dot:true}]; if(refs.length) legend.push({label:'Kapasitas analitis',color:T.info,dash:[6,4]});
   drawPlot(ctx,V,T,{title:'Kurva beban–perpindahan',subtitle:(m.isMC?`Mohr–Coulomb · c′ = ${fmt(m.cohesion,1)} kPa, φ′ = ${fmt(m.phiDeg,1)}°, ψ = ${fmt(m.psiDeg,1)}°`:'Linear Elastic')+' · '+(m.loadMode==='load'?'load control':'displacement control')+' · sumbu digambar −uᵧ dan −Fᵧ (ke bawah negatif)',
     xLabel:'−uᵧ rata-rata dasar pondasi (mm)',yLabel:m.isAxisym?'−Fᵧ per radian (kN/rad)':'−Fᵧ per meter (kN/m)',zeroX:true,zeroY:true,
@@ -1877,5 +1872,6 @@ window.addEventListener('load',()=>{
   generateMesh();
 });
 </script>
-</body>
-</html>
+
+
+</body></html>
